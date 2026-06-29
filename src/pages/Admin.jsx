@@ -19,6 +19,7 @@ export default function Admin() {
     changeResidentRole,
     approveResident,
     denyResident,
+    deleteResident,
     updateProfile,
     arcRequests,
     updateArcRequestStatus
@@ -426,22 +427,37 @@ export default function Admin() {
                         className="form-control table-select"
                         value={res.role}
                         onChange={(e) => handleRoleChange(res.id, e.target.value)}
-                        disabled={res.id === currentUser.id} // Don't let users lock themselves out of admin role
+                        disabled={res.id === currentUser.id || currentUser.role !== 'Admin'}
                       >
                         <option value="Resident">Resident</option>
                         <option value="Board Member">Board Member</option>
                         <option value="Admin">Admin</option>
                       </select>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button 
-                        className="btn btn-secondary"
-                        style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                        onClick={() => handleEditResidentClick(res)}
-                      >
-                        Edit Profile
-                      </button>
-                    </td>
+                     <td style={{ textAlign: 'right' }}>
+                       <div style={{ display: 'inline-flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                         <button 
+                           className="btn btn-secondary"
+                           style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                           onClick={() => handleEditResidentClick(res)}
+                           disabled={currentUser.role !== 'Admin'}
+                         >
+                           Edit Profile
+                         </button>
+                         <button 
+                           className="btn btn-danger"
+                           style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                           onClick={() => {
+                             if (confirm(`Are you sure you want to permanently delete resident ${res.name}?`)) {
+                               deleteResident(res.id);
+                             }
+                           }}
+                           disabled={res.id === currentUser.id || currentUser.role !== 'Admin'}
+                         >
+                           Delete
+                         </button>
+                       </div>
+                     </td>
                   </tr>
                 ))}
                 {filteredResidents.length === 0 && (

@@ -322,6 +322,12 @@ export const HOAProvider = ({ children }) => {
     addLog(`[ADMIN] Resident "${target ? target.name : residentId}" denied & deleted by administrator.`);
   };
 
+  const deleteResident = (residentId) => {
+    const target = residents.find(r => r.id === residentId);
+    setResidents(prev => prev.filter(res => res.id !== residentId));
+    addLog(`[ADMIN] Resident "${target ? target.name : residentId}" permanently deleted by administrator.`);
+  };
+
   // Clubhouse Booking Operations
   const addBooking = (date, slot) => {
     const isDoubleBooked = bookings.some(b => b.date === date && b.slot === slot);
@@ -495,6 +501,7 @@ This is an automated notification email sent from SummitHOA Portal.
       changeResidentRole,
       approveResident,
       denyResident,
+      deleteResident,
       addBooking,
       cancelBooking,
       addAnnouncement,
