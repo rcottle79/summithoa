@@ -24,7 +24,8 @@ export default function Admin() {
     arcRequests,
     updateArcRequestStatus,
     announcements,
-    deleteAnnouncement
+    deleteAnnouncement,
+    updateAnnouncement
   } = useContext(HOAContext);
 
   const [activeSubTab, setActiveSubTab] = useState('tickets'); // 'tickets' or 'residents'
