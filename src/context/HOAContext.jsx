@@ -10,6 +10,7 @@ import {
   collection, 
   doc, 
   setDoc, 
+  addDoc,
   updateDoc, 
   deleteDoc, 
   onSnapshot, 
@@ -304,7 +305,6 @@ export const HOAProvider = ({ children }) => {
   // Auth Operations
   const login = async (email, password) => {
     try {
-      // 1. Try Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
@@ -721,29 +721,51 @@ This is an automated notification email sent from SummitHOA Portal.
     const totalResidents = residents.length;
     
     if (channels.email) {
-      await addLog(`[EMAIL] Initiating broadcast to ${totalResidents} residents...`);
-      setTimeout(async () => {
-        await addLog(`[EMAIL] Connecting to SMTP Relay...`);
-      }, 500);
-      setTimeout(async () => {
-        residents.forEach(async (res) => {
-          await addLog(`[EMAIL] Dispatched email template to ${res.name} (${res.email})`);
-        });
-        await addLog(`[EMAIL] Successfully completed email broadcast to all active residents.`);
-      }, 1500);
+      await addLog(`[EMAIL] Queueing email broadcasts to ${totalResidents} residents...`);
+      residents.forEach(async (res) => {
+        if (res.email) {
+          try {
+            await addDoc(collection(db, 'mail'), {
+              to: res.email,
+              message: {
+                subject: `SummitHOA Notice: ${title}`,
+                text: `${content}\n\nThis is an automated announcement from the SummitHOA Portal.`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 8px;">SummitHOA Notice</h2>
+                    <h3 style="margin-top: 15px;">${title}</h3>
+                    <p style="line-height: 1.6; font-size: 15px;">${content}</p>
+                    ${image ? `<img src="${image}" alt="Notice Flyer" style="max-width: 100%; border-radius: 6px; margin: 15px 0;" />` : ''}
+                    <div style="margin-top: 20px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 10px;">
+                      Published by ${currentUser.name} | Category: ${category}
+                    </div>
+                  </div>
+                `
+              }
+            });
+            await addLog(`[EMAIL] Queued cloud email dispatch for ${res.name} (${res.email})`);
+          } catch (e) {
+            console.warn("Trigger Email queue failed:", e);
+          }
+        }
+      });
     }
 
     if (channels.sms) {
-      await addLog(`[SMS] Initiating SMS broadcast gateway via Twilio...`);
-      setTimeout(async () => {
-        await addLog(`[SMS] Authenticating with Twilio Gateway SID: AC5f81ae8e8093...`);
-      }, 300);
-      setTimeout(async () => {
-        residents.forEach(async (res) => {
-          await addLog(`[SMS] Text message broadcast to ${res.name} at phone: ${res.phone}`);
-        });
-        await addLog(`[SMS] SMS broadcast completed successfully.`);
-      }, 2500);
+      await addLog(`[SMS] Queueing text broadcasts to ${totalResidents} residents...`);
+      residents.forEach(async (res) => {
+        if (res.phone) {
+          try {
+            await addDoc(collection(db, 'sms'), {
+              to: res.phone,
+              body: `SummitHOA Alert: ${title}\n\n${content.substring(0, 100)}... View full notice at the portal.`
+            });
+            await addLog(`[SMS] Queued cloud SMS dispatch to ${res.name} (${res.phone})`);
+          } catch (e) {
+            console.warn("Trigger SMS queue failed:", e);
+          }
+        }
+      });
     }
 
     return newAnnouncement;
