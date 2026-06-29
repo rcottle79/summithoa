@@ -1,9 +1,17 @@
 import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { NotificationIcon, CloseIcon } from '../components/Icons';
+import Modal from '../components/Modal';
 
 export default function Notifications() {
-  const { announcements, deliveryLogs, addAnnouncement, clearLogs } = useContext(HOAContext);
+  const { 
+    currentUser, 
+    announcements, 
+    deliveryLogs, 
+    addAnnouncement, 
+    updateAnnouncement, 
+    clearLogs 
+  } = useContext(HOAContext);
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -28,6 +36,37 @@ export default function Notifications() {
     email: true,
     sms: true
   });
+
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editCategory, setEditCategory] = useState('General');
+  const [editEventDate, setEditEventDate] = useState('');
+  const [editEventTime, setEditEventTime] = useState('');
+  const [editImage, setEditImage] = useState(null);
+
+  const handleEditClick = (ann) => {
+    setEditingAnnouncement(ann);
+    setEditTitle(ann.title);
+    setEditContent(ann.content);
+    setEditCategory(ann.category);
+    setEditEventDate(ann.eventDate || '');
+    setEditEventTime(ann.eventTime || '');
+    setEditImage(ann.image || null);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    updateAnnouncement(editingAnnouncement.id, {
+      title: editTitle,
+      content: editContent,
+      category: editCategory,
+      eventDate: editCategory === 'Event' ? editEventDate : '',
+      eventTime: editCategory === 'Event' ? editEventTime : '',
+      image: editImage
+    });
+    setEditingAnnouncement(null);
+  };
 
   const handleChannelChange = (e) => {
     const { name, checked } = e.target;
@@ -99,8 +138,17 @@ export default function Notifications() {
                   </div>
                 )}
                 <p className="stream-card-content">{ann.content}</p>
-                <div className="stream-card-footer">
+                <div className="stream-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Author: {ann.author}</span>
+                  {(currentUser.role === 'Admin' || currentUser.name === ann.author) && (
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ minHeight: '28px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                      onClick={() => handleEditClick(ann)}
+                    >
+                      Edit Notice
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -261,6 +309,142 @@ export default function Notifications() {
           </div>
         </div>
       </div>
+
+      {editingAnnouncement && (
+        <Modal 
+          isOpen={!!editingAnnouncement} 
+          onClose={() => setEditingAnnouncement(null)} 
+          title="Edit Announcement"
+        >
+          <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="form-group">
+              <label htmlFor="edit-ann-title">Title <span className="required">*</span></label>
+              <input 
+                type="text" 
+                id="edit-ann-title" 
+                className="form-control" 
+                value={editTitle} 
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+                maxLength="80"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-ann-category">Category</label>
+              <select
+                id="edit-ann-category"
+                className="form-control"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
+              >
+                <option value="General">General News</option>
+                <option value="Event">Community Event</option>
+                <option value="Maintenance">Maintenance Alert</option>
+                <option value="Urgent">Urgent / Safety Alert</option>
+              </select>
+            </div>
+
+            {editCategory === 'Event' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label htmlFor="edit-event-date">Event Date <span className="required">*</span></label>
+                  <input
+                    type="date"
+                    id="edit-event-date"
+                    className="form-control"
+                    value={editEventDate}
+                    onChange={(e) => setEditEventDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="edit-event-time">Event Time</label>
+                  <input
+                    type="text"
+                    id="edit-event-time"
+                    className="form-control"
+                    placeholder="e.g. 1:00 PM - 5:00 PM"
+                    value={editEventTime}
+                    onChange={(e) => setEditEventTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="edit-ann-content">Announcement Details <span className="required">*</span></label>
+              <textarea
+                id="edit-ann-content"
+                className="form-control"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                required
+                maxLength="800"
+                style={{ minHeight: '120px' }}
+              ></textarea>
+            </div>
+
+            <div className="form-group">
+              <label>Announcement Flyer / Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                {editImage && (
+                  <img 
+                    src={editImage} 
+                    alt="Flyer Preview" 
+                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }} 
+                  />
+                )}
+                <input 
+                  type="file" 
+                  id="edit-announcement-image" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setEditImage(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="visually-hidden"
+                />
+                <label htmlFor="edit-announcement-image" className="btn btn-secondary" style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  {editImage ? 'Change Image' : 'Upload Flyer / Image'}
+                </label>
+                {editImage && (
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                    onClick={() => setEditImage(null)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setEditingAnnouncement(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       <style>{`
         .notifications-layout {

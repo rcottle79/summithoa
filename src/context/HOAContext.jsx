@@ -430,6 +430,11 @@ This is an automated notification email sent from SummitHOA Portal.
     addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
   };
 
+  const updateAnnouncement = (id, updatedFields) => {
+    setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
+    addLog(`[WEBSITE] Announcement "${id}" updated.`);
+  };
+
   // ARC Requests Operations
   const addArcRequest = (projectType, description, documents) => {
     const newRequest = {
@@ -512,6 +517,7 @@ This is an automated notification email sent from SummitHOA Portal.
       cancelBooking,
       addAnnouncement,
       deleteAnnouncement,
+      updateAnnouncement,
       clearLogs,
       arcRequests,
       addArcRequest,
