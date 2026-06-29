@@ -1,4 +1,14 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  getDocs 
+} from 'firebase/firestore';
 
 export const HOAContext = createContext();
 
@@ -56,63 +66,17 @@ export const HOAProvider = ({ children }) => {
 
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('hoa_currentUser');
-    let user = saved ? JSON.parse(saved) : null;
-    if (user && user.avatar && user.avatar.includes('unsplash.com')) {
-      const lowerName = user.name.toLowerCase();
-      if (lowerName.includes('sarah') || lowerName.includes('emily') || lowerName.includes('jenk') || lowerName.includes('rodri')) {
-        user.avatar = '/avatar-female.png';
-      } else {
-        user.avatar = '/avatar-male.png';
-      }
-    }
-    return user;
+    return saved ? JSON.parse(saved) : null;
   });
 
-  const [residents, setResidents] = useState(() => {
-    const saved = localStorage.getItem('hoa_residents');
-    let loaded = saved ? JSON.parse(saved) : initialResidents;
-    return loaded.map(res => {
-      if (res.avatar && res.avatar.includes('unsplash.com')) {
-        const lowerName = res.name.toLowerCase();
-        if (lowerName.includes('sarah') || lowerName.includes('emily') || lowerName.includes('jenk') || lowerName.includes('rodri')) {
-          res.avatar = '/avatar-female.png';
-        } else {
-          res.avatar = '/avatar-male.png';
-        }
-      }
-      return res;
-    });
-  });
+  const [residents, setResidents] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [arcRequests, setArcRequests] = useState([]);
+  const [deliveryLogs, setDeliveryLogs] = useState([]);
 
-  const [tickets, setTickets] = useState(() => {
-    const saved = localStorage.getItem('hoa_tickets');
-    return saved ? JSON.parse(saved) : initialTickets;
-  });
-
-  const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem('hoa_bookings');
-    return saved ? JSON.parse(saved) : initialBookings;
-  });
-
-  const [announcements, setAnnouncements] = useState(() => {
-    const saved = localStorage.getItem('hoa_announcements');
-    return saved ? JSON.parse(saved) : initialAnnouncements;
-  });
-
-  const [arcRequests, setArcRequests] = useState(() => {
-    const saved = localStorage.getItem('hoa_arc_requests');
-    return saved ? JSON.parse(saved) : initialArcRequests;
-  });
-
-  const [deliveryLogs, setDeliveryLogs] = useState(() => {
-    const saved = localStorage.getItem('hoa_deliveryLogs');
-    return saved ? JSON.parse(saved) : [
-      `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
-      `[DATABASE] Local database loaded successfully with ${initialResidents.length} resident accounts.`
-    ];
-  });
-
-  // Sync to localStorage
+  // Sync session authentication to localStorage
   useEffect(() => {
     localStorage.setItem('hoa_isAuthenticated', JSON.stringify(isAuthenticated));
   }, [isAuthenticated]);
@@ -121,38 +85,109 @@ export const HOAProvider = ({ children }) => {
     localStorage.setItem('hoa_currentUser', JSON.stringify(currentUser));
   }, [currentUser]);
 
+  // Subscribe to real-time updates and seed if empty
   useEffect(() => {
-    localStorage.setItem('hoa_residents', JSON.stringify(residents));
-  }, [residents]);
+    const unsubscribeResidents = onSnapshot(collection(db, 'residents'), (snapshot) => {
+      if (snapshot.empty) {
+        initialResidents.forEach(res => {
+          setDoc(doc(db, 'residents', res.id), res);
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        setResidents(loaded);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('hoa_tickets', JSON.stringify(tickets));
-  }, [tickets]);
+    const unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
+      if (snapshot.empty) {
+        initialTickets.forEach(ticket => {
+          setDoc(doc(db, 'tickets', ticket.id), ticket);
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        setTickets(loaded);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('hoa_bookings', JSON.stringify(bookings));
-  }, [bookings]);
+    const unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      if (snapshot.empty) {
+        initialBookings.forEach(booking => {
+          setDoc(doc(db, 'bookings', booking.id), booking);
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        setBookings(loaded);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('hoa_announcements', JSON.stringify(announcements));
-  }, [announcements]);
+    const unsubscribeAnnouncements = onSnapshot(collection(db, 'announcements'), (snapshot) => {
+      if (snapshot.empty) {
+        initialAnnouncements.forEach(ann => {
+          setDoc(doc(db, 'announcements', ann.id), ann);
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        loaded.sort((a, b) => b.id.localeCompare(a.id));
+        setAnnouncements(loaded);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('hoa_deliveryLogs', JSON.stringify(deliveryLogs));
-  }, [deliveryLogs]);
+    const unsubscribeArcRequests = onSnapshot(collection(db, 'arcRequests'), (snapshot) => {
+      if (snapshot.empty) {
+        initialArcRequests.forEach(req => {
+          setDoc(doc(db, 'arcRequests', req.id), req);
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        setArcRequests(loaded);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('hoa_arc_requests', JSON.stringify(arcRequests));
-  }, [arcRequests]);
+    const unsubscribeLogs = onSnapshot(collection(db, 'deliveryLogs'), (snapshot) => {
+      if (snapshot.empty) {
+        const initialLogs = [
+          `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
+          `[DATABASE] Firebase Cloud database loaded successfully.`
+        ];
+        initialLogs.forEach((logText, index) => {
+          setDoc(doc(db, 'deliveryLogs', `log-${index}-${Date.now()}`), { text: logText, timestamp: Date.now() + index });
+        });
+      } else {
+        const loaded = snapshot.docs.map(doc => doc.data());
+        loaded.sort((a, b) => b.timestamp - a.timestamp);
+        setDeliveryLogs(loaded.map(l => l.text));
+      }
+    });
+
+    return () => {
+      unsubscribeResidents();
+      unsubscribeTickets();
+      unsubscribeBookings();
+      unsubscribeAnnouncements();
+      unsubscribeArcRequests();
+      unsubscribeLogs();
+    };
+  }, []);
 
   // Log message helper
-  const addLog = (message) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDeliveryLogs(prev => [`[${timestamp}] ${message}`, ...prev]);
+  const addLog = async (message) => {
+    const timestamp = Date.now();
+    const timeString = new Date().toLocaleTimeString();
+    await setDoc(doc(db, 'deliveryLogs', `log-${timestamp}`), {
+      text: `[${timeString}] ${message}`,
+      timestamp
+    });
   };
 
-  const clearLogs = () => {
-    setDeliveryLogs([`[SYSTEM] Logs cleared.`]);
+  const clearLogs = async () => {
+    const snapshot = await getDocs(collection(db, 'deliveryLogs'));
+    snapshot.forEach(async (d) => {
+      await deleteDoc(doc(db, 'deliveryLogs', d.id));
+    });
+    await setDoc(doc(db, 'deliveryLogs', `log-${Date.now()}`), {
+      text: `[SYSTEM] Logs cleared.`,
+      timestamp: Date.now()
+    });
   };
 
   // Auth Operations
@@ -161,11 +196,9 @@ export const HOAProvider = ({ children }) => {
     if (!foundUser) {
       throw new Error("No account found with this email address.");
     }
-    // Check if account is approved by admin
     if (foundUser.approved === false) {
       throw new Error("Your account is currently pending administrator approval.");
     }
-    // simple mock password validation
     if (foundUser.password !== password) {
       throw new Error("Incorrect password. Please try again.");
     }
@@ -186,7 +219,6 @@ export const HOAProvider = ({ children }) => {
     }
 
     if (!targetUser) {
-      // Fallback to first user
       targetUser = residents[0];
     }
 
@@ -195,14 +227,15 @@ export const HOAProvider = ({ children }) => {
     addLog(`[AUTH] Quick-Login triggered. Authenticated as ${targetUser.name} (${targetUser.role}).`);
   };
 
-  const signup = (name, email, phone, address, bio, avatar, role, password) => {
+  const signup = async (name, email, phone, address, bio, avatar, role, password) => {
     const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
     if (emailExists) {
       throw new Error("An account already exists with this email.");
     }
 
+    const id = `res-${Date.now()}`;
     const newResident = {
-      id: `res-${Date.now()}`,
+      id,
       name,
       email,
       phone,
@@ -214,8 +247,8 @@ export const HOAProvider = ({ children }) => {
       approved: false
     };
 
-    setResidents(prev => [...prev, newResident]);
-    addLog(`[AUTH] Created new account for ${name} (Address: ${address}). Pending administrator approval.`);
+    await setDoc(doc(db, 'residents', id), newResident);
+    await addLog(`[AUTH] Created new account for ${name} (Address: ${address}). Pending administrator approval.`);
     return newResident;
   };
 
@@ -227,20 +260,19 @@ export const HOAProvider = ({ children }) => {
   };
 
   // Profile Operations
-  const updateProfile = (updatedProfile) => {
+  const updateProfile = async (updatedProfile) => {
+    await setDoc(doc(db, 'residents', updatedProfile.id), updatedProfile);
     if (currentUser && currentUser.id === updatedProfile.id) {
       setCurrentUser(updatedProfile);
     }
-    setResidents(prev => 
-      prev.map(r => r.id === updatedProfile.id ? { ...r, ...updatedProfile } : r)
-    );
-    addLog(`[PROFILE] Updated user profile for ${updatedProfile.name}.`);
+    await addLog(`[PROFILE] Updated user profile for ${updatedProfile.name}.`);
   };
 
   // Support Ticket Operations
-  const addTicket = (title, description, category, location, urgency) => {
+  const addTicket = async (title, description, category, location, urgency) => {
+    const id = `t-${Date.now()}`;
     const newTicket = {
-      id: `t-${Date.now()}`,
+      id,
       title,
       description,
       category,
@@ -251,100 +283,76 @@ export const HOAProvider = ({ children }) => {
       date: new Date().toISOString().split('T')[0],
       comments: []
     };
-    setTickets(prev => [newTicket, ...prev]);
-    addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
+    await setDoc(doc(db, 'tickets', id), newTicket);
+    await addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
     return newTicket;
   };
 
-  const updateTicketStatus = (ticketId, newStatus, commentText = '') => {
-    setTickets(prev => 
-      prev.map(ticket => {
-        if (ticket.id === ticketId) {
-          const updatedComments = [...ticket.comments];
-          if (commentText.trim()) {
-            updatedComments.push({
-              author: currentUser.name,
-              text: commentText,
-              date: new Date().toISOString().split('T')[0]
-            });
-          }
-          return {
-            ...ticket,
-            status: newStatus,
-            comments: updatedComments
-          };
-        }
-        return ticket;
-      })
-    );
-    addLog(`[SUPPORT] Ticket #${ticketId} status updated to "${newStatus}" by ${currentUser.name}.`);
+  const updateTicketStatus = async (ticketId, newStatus, commentText = '') => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (!ticket) return;
+    const updatedComments = [...(ticket.comments || [])];
+    if (commentText.trim()) {
+      updatedComments.push({
+        author: currentUser.name,
+        text: commentText,
+        date: new Date().toISOString().split('T')[0]
+      });
+    }
+    await updateDoc(doc(db, 'tickets', ticketId), {
+      status: newStatus,
+      comments: updatedComments
+    });
+    await addLog(`[SUPPORT] Ticket #${ticketId} status updated to "${newStatus}" by ${currentUser.name}.`);
   };
 
-  const deleteTicket = (ticketId) => {
-    setTickets(prev => prev.filter(t => t.id !== ticketId));
-    addLog(`[SUPPORT] Support Ticket #${ticketId} was deleted by Admin.`);
+  const deleteTicket = async (ticketId) => {
+    await deleteDoc(doc(db, 'tickets', ticketId));
+    await addLog(`[SUPPORT] Support Ticket #${ticketId} was deleted by Admin.`);
   };
 
   // Resident Manager Operations
-  const changeResidentRole = (residentId, newRole) => {
-    setResidents(prev => 
-      prev.map(res => {
-        if (res.id === residentId) {
-          const updated = { ...res, role: newRole };
-          // If editing active user, sync their active role state
-          if (currentUser && currentUser.id === residentId) {
-            setCurrentUser(updated);
-          }
-          return updated;
-        }
-        return res;
-      })
-    );
-    addLog(`[ADMIN] Resident #${residentId} role updated to "${newRole}".`);
+  const changeResidentRole = async (residentId, newRole) => {
+    await updateDoc(doc(db, 'residents', residentId), { role: newRole });
+    if (currentUser && currentUser.id === residentId) {
+      setCurrentUser(prev => ({ ...prev, role: newRole }));
+    }
+    await addLog(`[ADMIN] Resident #${residentId} role updated to "${newRole}".`);
   };
 
-  const approveResident = (residentId) => {
-    setResidents(prev => 
-      prev.map(res => {
-        if (res.id === residentId) {
-          return { ...res, approved: true };
-        }
-        return res;
-      })
-    );
-    const target = residents.find(r => r.id === residentId);
-    addLog(`[ADMIN] Resident "${target ? target.name : residentId}" approved by administrator.`);
+  const approveResident = async (residentId) => {
+    await updateDoc(doc(db, 'residents', residentId), { approved: true });
+    await addLog(`[ADMIN] Resident #${residentId} account approved by administrator.`);
   };
 
-  const denyResident = (residentId) => {
-    const target = residents.find(r => r.id === residentId);
-    setResidents(prev => prev.filter(res => res.id !== residentId));
-    addLog(`[ADMIN] Resident "${target ? target.name : residentId}" denied & deleted by administrator.`);
+  const denyResident = async (residentId) => {
+    await deleteDoc(doc(db, 'residents', residentId));
+    await addLog(`[ADMIN] Resident "${residentId}" denied & deleted by administrator.`);
   };
 
-  const deleteResident = (residentId) => {
-    const target = residents.find(r => r.id === residentId);
-    setResidents(prev => prev.filter(res => res.id !== residentId));
-    addLog(`[ADMIN] Resident "${target ? target.name : residentId}" permanently deleted by administrator.`);
+  const deleteResident = async (residentId) => {
+    await deleteDoc(doc(db, 'residents', residentId));
+    await addLog(`[ADMIN] Resident "${residentId}" permanently deleted by administrator.`);
   };
 
   // Clubhouse Booking Operations
-  const addBooking = (date, slot) => {
+  const addBooking = async (date, slot) => {
     const isDoubleBooked = bookings.some(b => b.date === date && b.slot === slot);
     if (isDoubleBooked) {
       throw new Error("This timeslot is already booked.");
     }
 
+    const id = `b-${Date.now()}`;
     const newBooking = {
-      id: `b-${Date.now()}`,
+      id,
       date,
       slot,
       residentName: currentUser.name,
       address: currentUser.address,
       status: 'Confirmed'
     };
-    setBookings(prev => [newBooking, ...prev]);
-    addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
+    await setDoc(doc(db, 'bookings', id), newBooking);
+    await addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
     const emailDetails = `
@@ -365,20 +373,21 @@ A new clubhouse reservation has been placed by a resident:
 This is an automated notification email sent from SummitHOA Portal.
 =================================`;
     console.log(emailDetails);
-    addLog(`[EMAIL] Simulated booking confirmation notice dispatched to board@summithoa.com`);
+    await addLog(`[EMAIL] Simulated booking confirmation notice dispatched to board@summithoa.com`);
     
     return newBooking;
   };
 
-  const cancelBooking = (bookingId) => {
-    setBookings(prev => prev.filter(b => b.id !== bookingId));
-    addLog(`[CALENDAR] Booking ${bookingId} cancelled.`);
+  const cancelBooking = async (bookingId) => {
+    await deleteDoc(doc(db, 'bookings', bookingId));
+    await addLog(`[CALENDAR] Booking ${bookingId} cancelled.`);
   };
 
   // Announcements Operations
   const addAnnouncement = async (title, content, category, channels, eventDate = '', eventTime = '', image = '') => {
+    const id = `a-${Date.now()}`;
     const newAnnouncement = {
-      id: `a-${Date.now()}`,
+      id,
       title,
       content,
       category,
@@ -390,55 +399,56 @@ This is an automated notification email sent from SummitHOA Portal.
     };
 
     if (channels.website) {
-      setAnnouncements(prev => [newAnnouncement, ...prev]);
-      addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
+      await setDoc(doc(db, 'announcements', id), newAnnouncement);
+      await addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
     }
 
     const totalResidents = residents.length;
     
     if (channels.email) {
-      addLog(`[EMAIL] Initiating broadcast to ${totalResidents} residents...`);
-      setTimeout(() => {
-        addLog(`[EMAIL] Connecting to SMTP Relay...`);
+      await addLog(`[EMAIL] Initiating broadcast to ${totalResidents} residents...`);
+      setTimeout(async () => {
+        await addLog(`[EMAIL] Connecting to SMTP Relay...`);
       }, 500);
-      setTimeout(() => {
-        residents.forEach(res => {
-          addLog(`[EMAIL] Dispatched email template to ${res.name} (${res.email})`);
+      setTimeout(async () => {
+        residents.forEach(async (res) => {
+          await addLog(`[EMAIL] Dispatched email template to ${res.name} (${res.email})`);
         });
-        addLog(`[EMAIL] Successfully completed email broadcast to all active residents.`);
+        await addLog(`[EMAIL] Successfully completed email broadcast to all active residents.`);
       }, 1500);
     }
 
     if (channels.sms) {
-      addLog(`[SMS] Initiating SMS broadcast gateway via Twilio...`);
-      setTimeout(() => {
-        addLog(`[SMS] Authenticating with Twilio Gateway SID: AC5f81ae8e8093...`);
+      await addLog(`[SMS] Initiating SMS broadcast gateway via Twilio...`);
+      setTimeout(async () => {
+        await addLog(`[SMS] Authenticating with Twilio Gateway SID: AC5f81ae8e8093...`);
       }, 300);
-      setTimeout(() => {
-        residents.forEach(res => {
-          addLog(`[SMS] Text message broadcast to ${res.name} at phone: ${res.phone}`);
+      setTimeout(async () => {
+        residents.forEach(async (res) => {
+          await addLog(`[SMS] Text message broadcast to ${res.name} at phone: ${res.phone}`);
         });
-        addLog(`[SMS] SMS broadcast completed successfully.`);
+        await addLog(`[SMS] SMS broadcast completed successfully.`);
       }, 2500);
     }
 
     return newAnnouncement;
   };
 
-  const deleteAnnouncement = (announcementId) => {
-    setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
-    addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
+  const deleteAnnouncement = async (announcementId) => {
+    await deleteDoc(doc(db, 'announcements', announcementId));
+    await addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
   };
 
-  const updateAnnouncement = (id, updatedFields) => {
-    setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
-    addLog(`[WEBSITE] Announcement "${id}" updated.`);
+  const updateAnnouncement = async (id, updatedFields) => {
+    await updateDoc(doc(db, 'announcements', id), updatedFields);
+    await addLog(`[WEBSITE] Announcement "${id}" updated.`);
   };
 
   // ARC Requests Operations
-  const addArcRequest = (projectType, description, documents) => {
+  const addArcRequest = async (projectType, description, documents) => {
+    const id = `arc-${Date.now()}`;
     const newRequest = {
-      id: `arc-${Date.now()}`,
+      id,
       residentId: currentUser.id,
       residentName: currentUser.name,
       address: currentUser.address,
@@ -451,8 +461,8 @@ This is an automated notification email sent from SummitHOA Portal.
       status: 'Pending',
       reviewerNotes: ''
     };
-    setArcRequests(prev => [newRequest, ...prev]);
-    addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
+    await setDoc(doc(db, 'arcRequests', id), newRequest);
+    await addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
     const docList = documents && documents.length > 0 
@@ -480,49 +490,49 @@ A new Architectural Review Request has been submitted by a resident:
 This is an automated notification email sent from SummitHOA Portal.
 =================================`;
     console.log(emailDetails);
-    addLog(`[EMAIL] Simulated ARC request details dispatched to board@summithoa.com`);
+    await addLog(`[EMAIL] Simulated ARC request details dispatched to board@summithoa.com`);
     
     return newRequest;
   };
 
-  const updateArcRequestStatus = (requestId, status, reviewerNotes) => {
-    setArcRequests(prev =>
-      prev.map(req => req.id === requestId ? { ...req, status, reviewerNotes } : req)
-    );
-    addLog(`[ARC] Request "${requestId}" updated to status "${status}" by administrator.`);
+  const updateArcRequestStatus = async (requestId, status, reviewerNotes) => {
+    await updateDoc(doc(db, 'arcRequests', requestId), { status, reviewerNotes });
+    await addLog(`[ARC] Request "${requestId}" updated to status "${status}" by administrator.`);
   };
 
   return (
-    <HOAContext.Provider value={{
-      isAuthenticated,
-      currentUser,
-      residents,
-      tickets,
-      bookings,
-      announcements,
-      deliveryLogs,
-      login,
-      quickLogin,
-      signup,
-      logout,
-      updateProfile,
-      addTicket,
-      updateTicketStatus,
-      deleteTicket,
-      changeResidentRole,
-      approveResident,
-      denyResident,
-      deleteResident,
-      addBooking,
-      cancelBooking,
-      addAnnouncement,
-      deleteAnnouncement,
-      updateAnnouncement,
-      clearLogs,
-      arcRequests,
-      addArcRequest,
-      updateArcRequestStatus
-    }}>
+    <HOAContext.Provider
+      value={{
+        isAuthenticated,
+        currentUser,
+        residents,
+        tickets,
+        bookings,
+        announcements,
+        deliveryLogs,
+        login,
+        quickLogin,
+        signup,
+        logout,
+        updateProfile,
+        addTicket,
+        updateTicketStatus,
+        deleteTicket,
+        changeResidentRole,
+        approveResident,
+        denyResident,
+        deleteResident,
+        addBooking,
+        cancelBooking,
+        addAnnouncement,
+        deleteAnnouncement,
+        updateAnnouncement,
+        clearLogs,
+        arcRequests,
+        addArcRequest,
+        updateArcRequestStatus
+      }}
+    >
       {children}
     </HOAContext.Provider>
   );
