@@ -78,17 +78,41 @@ export const HOAProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [residents, setResidents] = useState(initialResidents);
-  const [tickets, setTickets] = useState(initialTickets);
-  const [bookings, setBookings] = useState(initialBookings);
-  const [announcements, setAnnouncements] = useState(initialAnnouncements);
-  const [arcRequests, setArcRequests] = useState(initialArcRequests);
-  const [deliveryLogs, setDeliveryLogs] = useState([
-    `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
-    `[DATABASE] Local database loaded successfully.`
-  ]);
+  // Master LocalStorage / State Cache
+  const [residents, setResidents] = useState(() => {
+    const saved = localStorage.getItem('hoa_residents');
+    return saved ? JSON.parse(saved) : initialResidents;
+  });
 
-  // Sync session authentication to localStorage
+  const [tickets, setTickets] = useState(() => {
+    const saved = localStorage.getItem('hoa_tickets');
+    return saved ? JSON.parse(saved) : initialTickets;
+  });
+
+  const [bookings, setBookings] = useState(() => {
+    const saved = localStorage.getItem('hoa_bookings');
+    return saved ? JSON.parse(saved) : initialBookings;
+  });
+
+  const [announcements, setAnnouncements] = useState(() => {
+    const saved = localStorage.getItem('hoa_announcements');
+    return saved ? JSON.parse(saved) : initialAnnouncements;
+  });
+
+  const [arcRequests, setArcRequests] = useState(() => {
+    const saved = localStorage.getItem('hoa_arc_requests');
+    return saved ? JSON.parse(saved) : initialArcRequests;
+  });
+
+  const [deliveryLogs, setDeliveryLogs] = useState(() => {
+    const saved = localStorage.getItem('hoa_deliveryLogs');
+    return saved ? JSON.parse(saved) : [
+      `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
+      `[DATABASE] Local fallback database loaded successfully.`
+    ];
+  });
+
+  // Sync state mutations to LocalStorage for persistence in fallback/local mode
   useEffect(() => {
     localStorage.setItem('hoa_isAuthenticated', JSON.stringify(isAuthenticated));
   }, [isAuthenticated]);
@@ -96,6 +120,30 @@ export const HOAProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('hoa_currentUser', JSON.stringify(currentUser));
   }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_residents', JSON.stringify(residents));
+  }, [residents]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_tickets', JSON.stringify(tickets));
+  }, [tickets]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_bookings', JSON.stringify(bookings));
+  }, [bookings]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_announcements', JSON.stringify(announcements));
+  }, [announcements]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_deliveryLogs', JSON.stringify(deliveryLogs));
+  }, [deliveryLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_arc_requests', JSON.stringify(arcRequests));
+  }, [arcRequests]);
 
   // Subscribe to real-time updates and seed if empty
   useEffect(() => {
@@ -109,8 +157,7 @@ export const HOAProvider = ({ children }) => {
         setResidents(loaded);
       }
     }, (error) => {
-      console.warn("Residents subscription failed, loading mock state:", error);
-      setResidents(initialResidents);
+      console.warn("Residents subscription failed, loading local storage cache:", error);
     });
 
     const unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
@@ -123,8 +170,7 @@ export const HOAProvider = ({ children }) => {
         setTickets(loaded);
       }
     }, (error) => {
-      console.warn("Tickets subscription failed, loading mock state:", error);
-      setTickets(initialTickets);
+      console.warn("Tickets subscription failed, loading local storage cache:", error);
     });
 
     const unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
@@ -137,8 +183,7 @@ export const HOAProvider = ({ children }) => {
         setBookings(loaded);
       }
     }, (error) => {
-      console.warn("Bookings subscription failed, loading mock state:", error);
-      setBookings(initialBookings);
+      console.warn("Bookings subscription failed, loading local storage cache:", error);
     });
 
     const unsubscribeAnnouncements = onSnapshot(collection(db, 'announcements'), (snapshot) => {
@@ -152,8 +197,7 @@ export const HOAProvider = ({ children }) => {
         setAnnouncements(loaded);
       }
     }, (error) => {
-      console.warn("Announcements subscription failed, loading mock state:", error);
-      setAnnouncements(initialAnnouncements);
+      console.warn("Announcements subscription failed, loading local storage cache:", error);
     });
 
     const unsubscribeArcRequests = onSnapshot(collection(db, 'arcRequests'), (snapshot) => {
@@ -166,8 +210,7 @@ export const HOAProvider = ({ children }) => {
         setArcRequests(loaded);
       }
     }, (error) => {
-      console.warn("ARC requests subscription failed, loading mock state:", error);
-      setArcRequests(initialArcRequests);
+      console.warn("ARC requests subscription failed, loading local storage cache:", error);
     });
 
     const unsubscribeLogs = onSnapshot(collection(db, 'deliveryLogs'), (snapshot) => {
@@ -185,7 +228,7 @@ export const HOAProvider = ({ children }) => {
         setDeliveryLogs(loaded.map(l => l.text));
       }
     }, (error) => {
-      console.warn("Logs subscription failed, loading mock state:", error);
+      console.warn("Logs subscription failed, loading local storage cache:", error);
     });
 
     return () => {
