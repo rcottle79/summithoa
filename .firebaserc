@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "summithoa-portal-dc72f"
+  },
+  "targets": {},
+  "etags": {
+    "summithoa-portal-dc72f": {
+      "extensionInstances": {
+        "firestore-send-email": "e621bb9a5b068acf5348db06f6f8e61986aa8b288dd4e5f89afd453a11c925f2"
+      }
+    }
+  }
+}
