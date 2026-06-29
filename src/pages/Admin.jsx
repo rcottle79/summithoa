@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
-import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon } from '../components/Icons';
+import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon, NotificationIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 
 const defaultAvatars = [
@@ -22,7 +22,9 @@ export default function Admin() {
     deleteResident,
     updateProfile,
     arcRequests,
-    updateArcRequestStatus
+    updateArcRequestStatus,
+    announcements,
+    deleteAnnouncement
   } = useContext(HOAContext);
 
   const [activeSubTab, setActiveSubTab] = useState('tickets'); // 'tickets' or 'residents'
@@ -194,6 +196,12 @@ export default function Admin() {
           onClick={() => setActiveSubTab('arc')}
         >
           <ArcIcon size={16} /> Manage ARC Requests
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeSubTab === 'announcements' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('announcements')}
+        >
+          <NotificationIcon size={16} /> Manage Announcements
         </button>
       </div>
 
@@ -523,6 +531,85 @@ export default function Admin() {
                 {arcRequests.length === 0 && (
                   <tr>
                     <td colSpan="6" className="empty-table-td">No architectural review requests have been submitted.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: Manage Announcements */}
+      {activeSubTab === 'announcements' && (
+        <div className="admin-announcements-section glass-panel animate-fade-in">
+          <div className="section-title-bar">
+            <h2>Community Announcements</h2>
+            <p className="section-desc">
+              {currentUser.role === 'Admin' 
+                ? 'Manage notices and delete outdated website feed announcements.'
+                : 'View published website announcements feed (View Only).'}
+            </p>
+          </div>
+
+          <div className="table-responsive-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Date Posted</th>
+                  <th>Category</th>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Flyer Image</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {announcements.map(ann => (
+                  <tr key={ann.id} className="admin-tr">
+                    <td>{ann.date}</td>
+                    <td>
+                      <span className={`badge ${
+                        ann.category === 'Urgent' ? 'badge-danger' : 
+                        ann.category === 'Maintenance' ? 'badge-warning' :
+                        ann.category === 'Event' ? 'badge-success' : 'badge-info'
+                      }`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                        {ann.category}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>{ann.title}</strong>
+                    </td>
+                    <td>{ann.author}</td>
+                    <td>
+                      {ann.image ? (
+                        <img 
+                          src={ann.image} 
+                          alt="Flyer thumbnail" 
+                          style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }} 
+                        />
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>None</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button 
+                        className="btn btn-danger"
+                        style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to permanently delete the announcement "${ann.title}"?`)) {
+                            deleteAnnouncement(ann.id);
+                          }
+                        }}
+                        disabled={currentUser.role !== 'Admin'}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {announcements.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="empty-table-td">No announcements have been published.</td>
                   </tr>
                 )}
               </tbody>

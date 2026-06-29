@@ -10,6 +10,18 @@ export default function Notifications() {
   const [category, setCategory] = useState('General');
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   const [channels, setChannels] = useState({
     website: true,
@@ -35,7 +47,8 @@ export default function Notifications() {
       category, 
       channels, 
       category === 'Event' ? eventDate : '', 
-      category === 'Event' ? eventTime : ''
+      category === 'Event' ? eventTime : '',
+      imagePreview
     );
     
     // Reset Form
@@ -44,6 +57,7 @@ export default function Notifications() {
     setCategory('General');
     setEventDate('');
     setEventTime('');
+    setImagePreview(null);
   };
 
   return (
@@ -77,6 +91,11 @@ export default function Notifications() {
                   <div className="event-date-tag" style={{ marginTop: '0.25rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     📅 Event Date: {new Date(ann.eventDate + 'T00:00:00').toLocaleDateString('en-US', { dateStyle: 'long' })}
                     {ann.eventTime && ` at ${ann.eventTime}`}
+                  </div>
+                )}
+                {ann.image && (
+                  <div className="announcement-image-container animate-fade-in" style={{ marginBottom: '1rem', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '350px' }}>
+                    <img src={ann.image} alt={ann.title} style={{ width: '100%', height: '100%', maxHeight: '350px', objectFit: 'cover' }} />
                   </div>
                 )}
                 <p className="stream-card-content">{ann.content}</p>
@@ -164,6 +183,39 @@ export default function Notifications() {
                   required
                   maxLength="800"
                 ></textarea>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label>Announcement Flyer / Image</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                  {imagePreview && (
+                    <img 
+                      src={imagePreview} 
+                      alt="Flyer Preview" 
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }} 
+                    />
+                  )}
+                  <input 
+                    type="file" 
+                    id="announcement-image" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="visually-hidden"
+                  />
+                  <label htmlFor="announcement-image" className="btn btn-secondary" style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                    {imagePreview ? 'Change Image' : 'Upload Flyer / Image'}
+                  </label>
+                  {imagePreview && (
+                    <button 
+                      type="button" 
+                      className="btn btn-danger" 
+                      style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                      onClick={() => setImagePreview(null)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Channels checkboxes */}

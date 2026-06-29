@@ -376,7 +376,7 @@ This is an automated notification email sent from SummitHOA Portal.
   };
 
   // Announcements Operations
-  const addAnnouncement = async (title, content, category, channels, eventDate = '', eventTime = '') => {
+  const addAnnouncement = async (title, content, category, channels, eventDate = '', eventTime = '', image = '') => {
     const newAnnouncement = {
       id: `a-${Date.now()}`,
       title,
@@ -384,6 +384,7 @@ This is an automated notification email sent from SummitHOA Portal.
       category,
       eventDate,
       eventTime,
+      image,
       author: currentUser.name,
       date: new Date().toISOString().split('T')[0]
     };
@@ -422,6 +423,11 @@ This is an automated notification email sent from SummitHOA Portal.
     }
 
     return newAnnouncement;
+  };
+
+  const deleteAnnouncement = (announcementId) => {
+    setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
+    addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
   };
 
   // ARC Requests Operations
@@ -505,6 +511,7 @@ This is an automated notification email sent from SummitHOA Portal.
       addBooking,
       cancelBooking,
       addAnnouncement,
+      deleteAnnouncement,
       clearLogs,
       arcRequests,
       addArcRequest,

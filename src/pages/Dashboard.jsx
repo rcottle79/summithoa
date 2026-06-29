@@ -89,6 +89,11 @@ export default function Dashboard({ setActiveTab }) {
                   {latestAnnouncement.eventTime && ` at ${latestAnnouncement.eventTime}`}
                 </div>
               )}
+              {latestAnnouncement.image && (
+                <div className="announcement-image-container animate-fade-in" style={{ marginBottom: '1.25rem', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '350px' }}>
+                  <img src={latestAnnouncement.image} alt={latestAnnouncement.title} style={{ width: '100%', height: '100%', maxHeight: '350px', objectFit: 'cover' }} />
+                </div>
+              )}
               <p className="announcement-body">{latestAnnouncement.content}</p>
               <div className="announcement-author">Posted by: {latestAnnouncement.author}</div>
             </div>
