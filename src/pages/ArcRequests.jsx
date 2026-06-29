@@ -133,7 +133,7 @@ export default function ArcRequests() {
                 <h4>Filer Information (Auto-populated)</h4>
                 <div className="prefill-grid">
                   <div><strong>Name:</strong> {currentUser.name}</div>
-                  <div><strong>Address:</strong> {currentUser.address}</div>
+                  <div><strong>Street Address:</strong> {currentUser.address}</div>
                   <div><strong>Email:</strong> {currentUser.email}</div>
                   <div><strong>Phone:</strong> {currentUser.phone}</div>
                 </div>
@@ -230,7 +230,7 @@ export default function ArcRequests() {
                   <div className="request-meta">
                     <span>Submitted: {req.date}</span>
                     {activeTab === 'all' && (
-                      <span>Resident: {req.residentName} (Address: {req.address})</span>
+                      <span>Resident: {req.residentName} (Street Address: {req.address})</span>
                     )}
                   </div>
                   <p className="request-desc-snippet">{req.description}</p>

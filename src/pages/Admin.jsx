@@ -377,7 +377,7 @@ export default function Admin() {
                   <thead>
                     <tr>
                       <th>Resident Profile</th>
-                      <th>Address</th>
+                      <th>Street Address</th>
                       <th>Email Address</th>
                       <th>Phone Number</th>
                       <th style={{ textAlign: 'right' }}>Actions</th>
@@ -431,7 +431,7 @@ export default function Admin() {
               <input
                 type="text"
                 className="form-control filter-search"
-                placeholder="Search resident name, address, or email address..."
+                placeholder="Search resident name, street address, or email address..."
                 value={residentSearch}
                 onChange={(e) => setResidentSearch(e.target.value)}
               />
@@ -443,7 +443,7 @@ export default function Admin() {
               <thead>
                 <tr>
                   <th>Resident Profile</th>
-                  <th>Address</th>
+                  <th>Street Address</th>
                   <th>Email Address</th>
                   <th>Phone Number</th>
                   <th>Role Scope</th>
@@ -530,7 +530,7 @@ export default function Admin() {
                 <tr>
                   <th>Submission Date</th>
                   <th>Resident</th>
-                  <th>Address</th>
+                  <th>Street Address</th>
                   <th>Modification Type</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>

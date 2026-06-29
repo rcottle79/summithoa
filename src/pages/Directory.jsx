@@ -43,7 +43,7 @@ export default function Directory() {
           <input
             type="text"
             className="form-control search-input"
-            placeholder="Search by name or address (e.g. Jenkins or 3C)..."
+            placeholder="Search by name or street address (e.g. Jenkins or 3C)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -114,7 +114,7 @@ export default function Directory() {
 
             <div className="modal-details-body">
               <div className="modal-detail-row">
-                <span className="label">Address</span>
+                <span className="label">Street Address</span>
                 <span className="value">{selectedResident.address}</span>
               </div>
               <div className="modal-detail-row">
