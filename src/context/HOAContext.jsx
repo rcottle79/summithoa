@@ -27,6 +27,10 @@ const EMAILJS_SERVICE_ID = 'service_39wk28b';
 const EMAILJS_TEMPLATE_ID = 'Template_je3n89h'; // Replace this placeholder with your EmailJS Template ID
 const EMAILJS_PUBLIC_KEY = '4Zq_wwQeDOh0LHOWW';
 
+emailjs.init({
+  publicKey: EMAILJS_PUBLIC_KEY
+});
+
 const initialResidents = [
   { id: 'res-1', name: 'Sarah Jenkins', address: '3C', role: 'Board Member', email: 'sjenkins@hoa.community', phone: '(555) 019-2834', bio: 'Community Secretary. Passionate about gardening and keeping our common spaces green.', avatar: '/avatar-female.png', password: 'password123', approved: true },
   { id: 'res-2', name: 'John Smith', address: '1A', role: 'Resident', email: 'jsmith@domain.com', phone: '(555) 012-3847', bio: 'Resident since 2021. Love playing tennis at the community courts.', avatar: '/avatar-male.png', password: 'password123', approved: true },
@@ -743,7 +747,9 @@ This is an automated notification email sent from SummitHOA Portal.
                 category: category,
                 flyer_image: image || ''
               },
-              EMAILJS_PUBLIC_KEY
+              {
+                publicKey: EMAILJS_PUBLIC_KEY
+              }
             );
             await addLog(`[EMAIL] EmailJS dispatched notice to ${res.name} (${res.email})`);
           } catch (e) {
