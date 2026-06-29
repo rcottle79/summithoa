@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
 import { auth, db } from '../firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -21,6 +22,10 @@ import {
 } from 'firebase/firestore';
 
 export const HOAContext = createContext();
+
+const EMAILJS_SERVICE_ID = 'service_39wk28b';
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // Replace this placeholder with your EmailJS Template ID
+const EMAILJS_PUBLIC_KEY = '4Zq_wwQeDOh0LHOWW';
 
 const initialResidents = [
   { id: 'res-1', name: 'Sarah Jenkins', address: '3C', role: 'Board Member', email: 'sjenkins@hoa.community', phone: '(555) 019-2834', bio: 'Community Secretary. Passionate about gardening and keeping our common spaces green.', avatar: '/avatar-female.png', password: 'password123', approved: true },
@@ -305,6 +310,7 @@ export const HOAProvider = ({ children }) => {
   // Auth Operations
   const login = async (email, password) => {
     try {
+      // 1. Try Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
@@ -721,31 +727,28 @@ This is an automated notification email sent from SummitHOA Portal.
     const totalResidents = residents.length;
     
     if (channels.email) {
-      await addLog(`[EMAIL] Queueing email broadcasts to ${totalResidents} residents...`);
+      await addLog(`[EMAIL] Dispatching email broadcasts to ${totalResidents} residents via EmailJS...`);
       residents.forEach(async (res) => {
         if (res.email) {
           try {
-            await addDoc(collection(db, 'mail'), {
-              to: res.email,
-              message: {
-                subject: `SummitHOA Notice: ${title}`,
-                text: `${content}\n\nThis is an automated announcement from the SummitHOA Portal.`,
-                html: `
-                  <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #ddd; border-radius: 8px;">
-                    <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 8px;">SummitHOA Notice</h2>
-                    <h3 style="margin-top: 15px;">${title}</h3>
-                    <p style="line-height: 1.6; font-size: 15px;">${content}</p>
-                    ${image ? `<img src="${image}" alt="Notice Flyer" style="max-width: 100%; border-radius: 6px; margin: 15px 0;" />` : ''}
-                    <div style="margin-top: 20px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 10px;">
-                      Published by ${currentUser.name} | Category: ${category}
-                    </div>
-                  </div>
-                `
-              }
-            });
-            await addLog(`[EMAIL] Queued cloud email dispatch for ${res.name} (${res.email})`);
+            await emailjs.send(
+              EMAILJS_SERVICE_ID,
+              EMAILJS_TEMPLATE_ID,
+              {
+                resident_name: res.name,
+                resident_email: res.email,
+                title: title,
+                content: content,
+                author: currentUser.name,
+                category: category,
+                flyer_image: image || ''
+              },
+              EMAILJS_PUBLIC_KEY
+            );
+            await addLog(`[EMAIL] EmailJS dispatched notice to ${res.name} (${res.email})`);
           } catch (e) {
-            console.warn("Trigger Email queue failed:", e);
+            console.error("EmailJS sending failed for " + res.email, e);
+            await addLog(`[EMAIL] EmailJS failed for ${res.name}: ${e.text || e.message || e}`);
           }
         }
       });
