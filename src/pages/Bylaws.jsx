@@ -243,35 +243,10 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
           <div className="pdf-toolbar">
             <div className="toolbar-left">
               <span className="toolbar-doc-title">Summit_Declaration_2008.pdf</span>
-              <span className="divider">|</span>
-              <div className="page-selectors">
-                <button 
-                  className="toolbar-btn" 
-                  disabled={customPdfUrl || pdfPage === 1}
-                  onClick={() => setPdfPage(p => Math.max(1, p - 1))}
-                >
-                  Previous Page
-                </button>
-                <span className="page-indicator">Page {customPdfUrl ? '1' : pdfPage} of {customPdfUrl ? '1' : '4'}</span>
-                <button 
-                  className="toolbar-btn" 
-                  disabled={customPdfUrl || pdfPage === 4}
-                  onClick={() => setPdfPage(p => Math.min(4, p + 1))}
-                >
-                  Next Page
-                </button>
-              </div>
             </div>
 
             <div className="toolbar-right">
-              <div className="zoom-controls">
-                <button className="toolbar-btn" onClick={() => setPdfZoom(z => Math.max(50, z - 25))}>-</button>
-                <span className="zoom-level">{pdfZoom}%</span>
-                <button className="toolbar-btn" onClick={() => setPdfZoom(z => Math.min(200, z + 25))}>+</button>
-              </div>
-              <span className="divider">|</span>
-              
-              {/* File Upload to replace with real PDF */}
+              {/* File Upload to replace with custom PDF */}
               <div className="file-actions">
                 <input
                   type="file"
@@ -285,21 +260,15 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
                     Reset Default
                   </button>
                 ) : (
-                  <label htmlFor="pdf-covenant-upload" className="btn btn-secondary toolbar-btn-action upload-label-btn">
+                  <label htmlFor="pdf-covenant-upload" className="btn btn-secondary toolbar-btn-action upload-label-btn" style={{ cursor: 'pointer' }}>
                     Upload Custom PDF
                   </label>
                 )}
                 
                 <a 
-                  href={customPdfUrl || '#'} 
+                  href={customPdfUrl || '/Summit_Declaration_2008.pdf'} 
                   download="Summit_Declaration_2008.pdf"
                   className="btn btn-primary toolbar-btn-action download-btn"
-                  onClick={(e) => {
-                    if (!customPdfUrl) {
-                      e.preventDefault();
-                      alert("This is a high-fidelity visual PDF simulation. Upload a custom PDF to enable real downloads!");
-                    }
-                  }}
                 >
                   Download PDF
                 </a>
@@ -308,217 +277,14 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
           </div>
 
           {/* PDF Viewer Sheet Box */}
-          <div className="pdf-sheet-viewer-box">
-            <div className="pdf-sheet-scroll" style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top center' }}>
-              
-              {customPdfUrl ? (
-                /* Real PDF View (If uploaded) */
-                <iframe 
-                  src={customPdfUrl} 
-                  title="Uploaded PDF View" 
-                  width="100%" 
-                  height="750px" 
-                  style={{ border: 'none', background: '#fff' }}
-                />
-              ) : (
-                /* High-Fidelity Scanned PDF Simulator (Mirrors Screenshots) */
-                <div className="scanned-pdf-page">
-                  {pdfPage === 1 && (
-                    /* Page 1 replica: EXHIBIT 2 Preamble cover */
-                    <div className="pdf-canvas-replica page-cover">
-                      <div className="top-citation">EXHIBIT 2</div>
-                      <div className="main-title">Declaration</div>
-                      
-                      {/* Handwriting replica */}
-                      <div className="handwriting-text font-script">
-                        First Amendment 11/17/2008
-                      </div>
-                      
-                      <div className="page-footer-citation">
-                        <span className="left-code">MO2271377.4</span>
-                        <span className="page-num">26</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {pdfPage === 2 && (
-                    /* Page 2 replica: Real Monongalia County Court Recording Header */
-                    <div className="pdf-canvas-replica page-legal">
-                      {/* Top Recording Stamps Bar */}
-                      <div className="scanned-stamps-bar">
-                        <div className="stamp-left">
-                          <strong>VOL 1374 PAGE 342</strong>
-                          <div className="handwritten-ink">1374-342</div>
-                        </div>
-                        <div className="stamp-mid">
-                          <strong>STEPTOE & JOHNSON</strong>
-                          <div>PO BOX 1616</div>
-                          <div>MORGANTOWN, WV 26507-1616</div>
-                        </div>
-                        <div className="stamp-right border-stamp">
-                          <strong>CARYE L. BLANEY</strong>
-                          <div>MONONGALIA County 01:30:52 PM</div>
-                          <div>Instrument No 298971</div>
-                          <div>Date Recorded 10/14/2008</div>
-                          <div>Document Type COV</div>
-                          <div>Recording Fee $36.00</div>
-                          <div>Additional $9.00</div>
-                        </div>
-                      </div>
-
-                      {/* Declaration Heading */}
-                      <div className="legal-title-header">
-                        THE SUMMIT AT CHEAT LAKE<br />
-                        DECLARATION
-                      </div>
-
-                      <div className="legal-body-text">
-                        <p>
-                          <strong>THIS DECLARATION</strong> is made and entered into this 3<sup>rd</sup> day of October, 2008, by 
-                          <strong> The Summit at Cheat Lake, LLC</strong>, a West Virginia limited liability company ("Declarant").
-                        </p>
-                        
-                        <p>
-                          <strong>WHEREAS</strong>, Declarant owns and holds title to certain real property located and situate in Union 
-                          District, Monongalia County, West Virginia, which Declarant intends to develop into a planned community; and
-                        </p>
-
-                        <p>
-                          <strong>WHEREAS</strong>, Declarant intends to subject such property to the conditions, covenants, restrictions, 
-                          exceptions, reservations, easements, rights of way, and limitations set forth and contained in this Declaration, 
-                          each and all of which shall apply to, be binding upon, and inure to the benefit of Declarant, Address Owners, the 
-                          Association, their successors and assigns, and any and all other parties having an interest in such property.
-                        </p>
-
-                        <p className="witnesseth">
-                          <strong>NOW, THEREFORE, WITNESSETH:</strong> Declarant hereby declares that the Property is and shall be held, 
-                          transferred, sold, granted, conveyed, leased and occupied subject to the conditions, covenants, restrictions, 
-                          exceptions, reservations, easements, rights of way, and limitations set forth and contained in this Declaration.
-                        </p>
-
-                        <div className="article-title">Article I</div>
-                        <div className="article-subtitle">THE ACT</div>
-                        <p>
-                          <strong>1.01. Applicability of the Act:</strong> Declarant hereby subjects and submits the Property, as a planned 
-                          community, to the terms and provisions of the Act.
-                        </p>
-                      </div>
-
-                      <div className="page-footer-citation">
-                        <span className="left-code">MO2271541.5</span>
-                        <span className="page-num">1</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {pdfPage === 3 && (
-                    /* Page 3 replica: Definitions and Bylaws citation */
-                    <div className="pdf-canvas-replica page-legal">
-                      <div className="scanned-stamps-bar pt-stamp">
-                        <div className="stamp-left">
-                          <strong>VOL 1374 PAGE 343</strong>
-                        </div>
-                      </div>
-
-                      <div className="legal-body-text">
-                        <p>
-                          <strong>2.04. Association:</strong> The Summit at Cheat Lake Property Owners' Association, Inc., a non-profit corporation, 
-                          organized under the laws of the State of West Virginia, and any wholly-owned subsidiary thereof, its successors and assigns.
-                        </p>
-
-                        <p>
-                          <strong>2.05. Board:</strong> The board of directors of the Association.
-                        </p>
-
-                        <p className="highlight-row">
-                          <strong>2.06. Bylaws:</strong> The bylaws of the Association and any and all amendments and modifications thereof and supplements thereto.
-                        </p>
-
-                        <p>
-                          <strong>2.07. Clerk's Office:</strong> The Office of the Clerk of the County Commission of Monongalia County, West Virginia.
-                        </p>
-
-                        <p>
-                          <strong>2.08. Common Elements:</strong> All areas on the Plat labeled "Common Areas", all streets, roads, easements, rights of way 
-                          (including easements and rights of way over the Addresses, as shown on the Plat), rights, privileges, benefits, and interests appurtenant 
-                          thereto, and improvements and permanent fixtures now or hereafter located and situated on the Property...
-                        </p>
-
-                        <p>
-                          <strong>2.09. Common Expenses:</strong> Expenditures made by, or financial liabilities of, the Association, together with any allocations to reserves.
-                        </p>
-
-                        <p>
-                          <strong>2.10. Common Expense Liabilities:</strong> The liability for Common Expenses allocated each year.
-                        </p>
-                      </div>
-
-                      <div className="page-footer-citation">
-                        <span className="left-code">MO2271541.5</span>
-                        <span className="page-num">2</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {pdfPage === 4 && (
-                    /* Page 4 replica: First Amendment Cover with stamps */
-                    <div className="pdf-canvas-replica page-legal">
-                      <div className="scanned-stamps-bar">
-                        <div className="stamp-left">
-                          <strong>VOL 1376 PAGE 416</strong>
-                          <div className="handwritten-ink">1376-416</div>
-                        </div>
-                        <div className="stamp-mid">
-                          <strong>STEPTOE & JOHNSON</strong>
-                          <div>PO BOX 1616</div>
-                        </div>
-                        <div className="stamp-right border-stamp">
-                          <strong>CARYE L. BLANEY</strong>
-                          <div>MONONGALIA County 02:12:44 PM</div>
-                          <div>Instrument No 302766</div>
-                          <div>Date Recorded 11/18/2008</div>
-                          <div>Document Type COV</div>
-                          <div>Recording Fee $5.00</div>
-                          <div>Additional $6.00</div>
-                        </div>
-                      </div>
-
-                      <div className="legal-title-header font-bold">
-                        FIRST AMENDMENT TO<br />
-                        THE SUMMIT AT CHEAT LAKE DECLARATION
-                      </div>
-
-                      <div className="legal-body-text">
-                        <p>
-                          This First Amendment to The Summit at Cheat Lake Declaration ("First Amendment") is made and entered into this 
-                          <strong> 17<sup>th</sup> day of November, 2008</strong>, by <strong>The Summit at Cheat Lake, LLC</strong>, a 
-                          West Virginia limited liability company ("Declarant").
-                        </p>
-
-                        <div className="article-title text-uppercase font-bold">Recitals</div>
-                        <p>
-                          <strong>1.</strong> By The Summit at Cheat Lake Declaration dated October 3, 2008, recorded in the office of the Clerk of the 
-                          County Commission of Monongalia County, West Virginia, in Deed Book 1374, at Page 342 ("Declaration"), Declarant created and established 
-                          The Summit at Cheat Lake, a planned community ("Community").
-                        </p>
-
-                        <p>
-                          <strong>4.</strong> Pursuant to Paragraph 6.01 of the Declaration, Declarant desires to amend the Declaration to include the Phase I Plats 
-                          into the terms and conditions and include Phase II of the Community, which shall consist of Addresses 42 to 89, inclusive, together with 
-                          all related Common Elements, as shown on a Plat dated November 13, 2008, and of record in said Clerk's Office in Map Cabinet 5, Envelope 51A.
-                        </p>
-                      </div>
-
-                      <div className="page-footer-citation">
-                        <span className="left-code">S&J 5005108</span>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-            </div>
+          <div className="pdf-sheet-viewer-box" style={{ background: '#0f172a', padding: '1rem', borderRadius: '0 0 var(--border-radius-sm) var(--border-radius-sm)', border: '1px solid var(--border-color)', borderTop: 'none' }}>
+            <iframe 
+              src={customPdfUrl || '/Summit_Declaration_2008.pdf'} 
+              title="Summit HOA Governing Documents PDF View" 
+              width="100%" 
+              height="800px" 
+              style={{ border: 'none', background: '#fff', borderRadius: 'var(--border-radius-sm)' }}
+            />
           </div>
         </div>
       )}
