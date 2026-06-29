@@ -1,5 +1,11 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { auth, db } from '../firebase';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
 import { 
   collection, 
   doc, 
@@ -7,7 +13,10 @@ import {
   updateDoc, 
   deleteDoc, 
   onSnapshot, 
-  getDocs 
+  getDocs,
+  getDoc,
+  query,
+  where
 } from 'firebase/firestore';
 
 export const HOAContext = createContext();
@@ -169,6 +178,29 @@ export const HOAProvider = ({ children }) => {
     };
   }, []);
 
+  // Listen to Firebase Auth state changes
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.approved) {
+            setCurrentUser(userData);
+            setIsAuthenticated(true);
+          } else {
+            // Force sign out if not approved
+            await signOut(auth);
+            setCurrentUser(null);
+            setIsAuthenticated(false);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
   // Log message helper
   const addLog = async (message) => {
     const timestamp = Date.now();
@@ -191,72 +223,151 @@ export const HOAProvider = ({ children }) => {
   };
 
   // Auth Operations
-  const login = (email, password) => {
-    const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase());
-    if (!foundUser) {
-      throw new Error("No account found with this email address.");
+  const login = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
+      if (!userDoc.exists()) {
+        // Fallback: check if user exists under old mock ID in firestore
+        const q = query(collection(db, 'residents'), where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          await signOut(auth);
+          throw new Error("No resident profile found for this authenticated account.");
+        }
+
+        const residentData = querySnapshot.docs[0].data();
+        await setDoc(doc(db, 'residents', firebaseUser.uid), {
+          ...residentData,
+          id: firebaseUser.uid
+        });
+        await deleteDoc(doc(db, 'residents', residentData.id));
+
+        if (!residentData.approved) {
+          await signOut(auth);
+          throw new Error("Your account is currently pending administrator approval.");
+        }
+
+        setCurrentUser({ ...residentData, id: firebaseUser.uid });
+        setIsAuthenticated(true);
+        await addLog(`[AUTH] Resident ${residentData.name} signed in successfully.`);
+        return { ...residentData, id: firebaseUser.uid };
+      }
+
+      const foundUser = userDoc.data();
+      if (!foundUser.approved) {
+        await signOut(auth);
+        throw new Error("Your account is currently pending administrator approval.");
+      }
+
+      setCurrentUser(foundUser);
+      setIsAuthenticated(true);
+      await addLog(`[AUTH] Resident ${foundUser.name} signed in successfully.`);
+      return foundUser;
+    } catch (err) {
+      console.error("Login error details:", err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        throw new Error("Incorrect email address or password. Please try again.");
+      }
+      throw new Error(err.message || "An authentication error occurred.");
     }
-    if (foundUser.approved === false) {
-      throw new Error("Your account is currently pending administrator approval.");
-    }
-    if (foundUser.password !== password) {
-      throw new Error("Incorrect password. Please try again.");
-    }
-    setCurrentUser(foundUser);
-    setIsAuthenticated(true);
-    addLog(`[AUTH] Resident ${foundUser.name} signed in successfully.`);
-    return foundUser;
   };
 
-  const quickLogin = (role) => {
-    let targetUser = null;
+  const quickLogin = async (role) => {
+    let email = '';
+    let mockId = '';
     if (role === 'Admin') {
-      targetUser = residents.find(r => r.role === 'Admin');
+      email = 'mchang@hoa-admin.com';
+      mockId = 'res-3';
     } else if (role === 'Board Member') {
-      targetUser = residents.find(r => r.role === 'Board Member');
+      email = 'sjenkins@hoa.community';
+      mockId = 'res-1';
     } else {
-      targetUser = residents.find(r => r.role === 'Resident');
+      email = 'jsmith@domain.com';
+      mockId = 'res-2';
     }
 
-    if (!targetUser) {
-      targetUser = residents[0];
-    }
+    try {
+      const templateResident = initialResidents.find(r => r.id === mockId) || initialResidents[0];
+      let userCredential;
+      
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, email, 'password123');
+      } catch (err) {
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          // Provision in Firebase Auth on the fly
+          userCredential = await createUserWithEmailAndPassword(auth, email, 'password123');
+          const firebaseUser = userCredential.user;
+          const newProfile = {
+            ...templateResident,
+            id: firebaseUser.uid
+          };
+          await setDoc(doc(db, 'residents', firebaseUser.uid), newProfile);
+        } else {
+          throw err;
+        }
+      }
 
-    setCurrentUser(targetUser);
-    setIsAuthenticated(true);
-    addLog(`[AUTH] Quick-Login triggered. Authenticated as ${targetUser.name} (${targetUser.role}).`);
+      const firebaseUser = userCredential.user;
+      const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
+      const activeUser = userDoc.exists() ? userDoc.data() : { ...templateResident, id: firebaseUser.uid };
+
+      setCurrentUser(activeUser);
+      setIsAuthenticated(true);
+      await addLog(`[AUTH] Quick-Login triggered. Authenticated as ${activeUser.name} (${activeUser.role}) via Firebase Auth.`);
+    } catch (err) {
+      console.error("Quick login failed, falling back to local credentials:", err);
+      const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase()) || residents[0];
+      setCurrentUser(foundUser);
+      setIsAuthenticated(true);
+      await addLog(`[AUTH] Quick-Login fallback triggered locally for ${foundUser.name}.`);
+    }
   };
 
   const signup = async (name, email, phone, address, bio, avatar, role, password) => {
-    const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
-    if (emailExists) {
-      throw new Error("An account already exists with this email.");
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      const newResident = {
+        id: firebaseUser.uid,
+        name,
+        email,
+        phone,
+        address,
+        bio,
+        avatar,
+        role,
+        password,
+        approved: false
+      };
+
+      await setDoc(doc(db, 'residents', firebaseUser.uid), newResident);
+      await signOut(auth); // Sign out because of approval gate
+
+      await addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) in Firebase Auth. Pending administrator approval.`);
+      return newResident;
+    } catch (err) {
+      console.error("Signup error details:", err);
+      if (err.code === 'auth/email-already-in-use') {
+        throw new Error("An account already exists with this email.");
+      }
+      throw new Error(err.message || "An account creation error occurred.");
     }
-
-    const id = `res-${Date.now()}`;
-    const newResident = {
-      id,
-      name,
-      email,
-      phone,
-      address,
-      bio,
-      avatar,
-      role,
-      password,
-      approved: false
-    };
-
-    await setDoc(doc(db, 'residents', id), newResident);
-    await addLog(`[AUTH] Created new account for ${name} (Address: ${address}). Pending administrator approval.`);
-    return newResident;
   };
 
-  const logout = () => {
+  const logout = async () => {
     const name = currentUser ? currentUser.name : 'Unknown';
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Firebase signout failed:", err);
+    }
     setIsAuthenticated(false);
     setCurrentUser(null);
-    addLog(`[AUTH] User ${name} logged out.`);
+    await addLog(`[AUTH] User ${name} logged out.`);
   };
 
   // Profile Operations
