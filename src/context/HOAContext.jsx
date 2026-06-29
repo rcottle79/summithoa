@@ -751,23 +751,6 @@ This is an automated notification email sent from SummitHOA Portal.
       });
     }
 
-    if (channels.sms) {
-      await addLog(`[SMS] Queueing text broadcasts to ${totalResidents} residents...`);
-      residents.forEach(async (res) => {
-        if (res.phone) {
-          try {
-            await addDoc(collection(db, 'sms'), {
-              to: res.phone,
-              body: `SummitHOA Alert: ${title}\n\n${content.substring(0, 100)}... View full notice at the portal.`
-            });
-            await addLog(`[SMS] Queued cloud SMS dispatch to ${res.name} (${res.phone})`);
-          } catch (e) {
-            console.warn("Trigger SMS queue failed:", e);
-          }
-        }
-      });
-    }
-
     return newAnnouncement;
   };
 

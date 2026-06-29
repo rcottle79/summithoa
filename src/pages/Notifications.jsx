@@ -33,8 +33,7 @@ export default function Notifications() {
   
   const [channels, setChannels] = useState({
     website: true,
-    email: true,
-    sms: true
+    email: true
   });
 
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
@@ -75,7 +74,7 @@ export default function Notifications() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!channels.website && !channels.email && !channels.sms) {
+    if (!channels.website && !channels.email) {
       alert("Please select at least one distribution channel.");
       return;
     }
@@ -103,7 +102,7 @@ export default function Notifications() {
     <div className="notifications-page-container animate-fade-in">
       <div className="notifications-header">
         <h1>Announcements Dashboard</h1>
-        <p className="subtitle">Publish community notices, schedule email dispatches, and trigger SMS text broadcasts.</p>
+        <p className="subtitle">Publish community notices and schedule email dispatches.</p>
       </div>
 
       <div className="notifications-layout">
@@ -288,16 +287,6 @@ export default function Notifications() {
                       onChange={handleChannelChange}
                     />
                     <span>Email Broadcast to Residents</span>
-                  </label>
-
-                  <label className="checkbox-item-label">
-                    <input
-                      type="checkbox"
-                      name="sms"
-                      checked={channels.sms}
-                      onChange={handleChannelChange}
-                    />
-                    <span>Text/SMS Broadcast to Phones</span>
                   </label>
                 </div>
               </div>
