@@ -24,7 +24,7 @@ import {
 export const HOAContext = createContext();
 
 const EMAILJS_SERVICE_ID = 'service_39wk28b';
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // Replace this placeholder with your EmailJS Template ID
+const EMAILJS_TEMPLATE_ID = 'Template_je3n89h'; // Replace this placeholder with your EmailJS Template ID
 const EMAILJS_PUBLIC_KEY = '4Zq_wwQeDOh0LHOWW';
 
 const initialResidents = [
