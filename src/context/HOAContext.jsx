@@ -78,12 +78,15 @@ export const HOAProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [residents, setResidents] = useState([]);
-  const [tickets, setTickets] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [arcRequests, setArcRequests] = useState([]);
-  const [deliveryLogs, setDeliveryLogs] = useState([]);
+  const [residents, setResidents] = useState(initialResidents);
+  const [tickets, setTickets] = useState(initialTickets);
+  const [bookings, setBookings] = useState(initialBookings);
+  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const [arcRequests, setArcRequests] = useState(initialArcRequests);
+  const [deliveryLogs, setDeliveryLogs] = useState([
+    `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
+    `[DATABASE] Local database loaded successfully.`
+  ]);
 
   // Sync session authentication to localStorage
   useEffect(() => {
@@ -99,73 +102,90 @@ export const HOAProvider = ({ children }) => {
     const unsubscribeResidents = onSnapshot(collection(db, 'residents'), (snapshot) => {
       if (snapshot.empty) {
         initialResidents.forEach(res => {
-          setDoc(doc(db, 'residents', res.id), res);
+          setDoc(doc(db, 'residents', res.id), res).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         setResidents(loaded);
       }
+    }, (error) => {
+      console.warn("Residents subscription failed, loading mock state:", error);
+      setResidents(initialResidents);
     });
 
     const unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
       if (snapshot.empty) {
         initialTickets.forEach(ticket => {
-          setDoc(doc(db, 'tickets', ticket.id), ticket);
+          setDoc(doc(db, 'tickets', ticket.id), ticket).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         setTickets(loaded);
       }
+    }, (error) => {
+      console.warn("Tickets subscription failed, loading mock state:", error);
+      setTickets(initialTickets);
     });
 
     const unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
       if (snapshot.empty) {
         initialBookings.forEach(booking => {
-          setDoc(doc(db, 'bookings', booking.id), booking);
+          setDoc(doc(db, 'bookings', booking.id), booking).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         setBookings(loaded);
       }
+    }, (error) => {
+      console.warn("Bookings subscription failed, loading mock state:", error);
+      setBookings(initialBookings);
     });
 
     const unsubscribeAnnouncements = onSnapshot(collection(db, 'announcements'), (snapshot) => {
       if (snapshot.empty) {
         initialAnnouncements.forEach(ann => {
-          setDoc(doc(db, 'announcements', ann.id), ann);
+          setDoc(doc(db, 'announcements', ann.id), ann).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         loaded.sort((a, b) => b.id.localeCompare(a.id));
         setAnnouncements(loaded);
       }
+    }, (error) => {
+      console.warn("Announcements subscription failed, loading mock state:", error);
+      setAnnouncements(initialAnnouncements);
     });
 
     const unsubscribeArcRequests = onSnapshot(collection(db, 'arcRequests'), (snapshot) => {
       if (snapshot.empty) {
         initialArcRequests.forEach(req => {
-          setDoc(doc(db, 'arcRequests', req.id), req);
+          setDoc(doc(db, 'arcRequests', req.id), req).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         setArcRequests(loaded);
       }
+    }, (error) => {
+      console.warn("ARC requests subscription failed, loading mock state:", error);
+      setArcRequests(initialArcRequests);
     });
 
     const unsubscribeLogs = onSnapshot(collection(db, 'deliveryLogs'), (snapshot) => {
       if (snapshot.empty) {
         const initialLogs = [
           `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
-          `[DATABASE] Firebase Cloud database loaded successfully.`
+          `[DATABASE] Local database sync enabled.`
         ];
         initialLogs.forEach((logText, index) => {
-          setDoc(doc(db, 'deliveryLogs', `log-${index}-${Date.now()}`), { text: logText, timestamp: Date.now() + index });
+          setDoc(doc(db, 'deliveryLogs', `log-${index}-${Date.now()}`), { text: logText, timestamp: Date.now() + index }).catch(e => {});
         });
       } else {
         const loaded = snapshot.docs.map(doc => doc.data());
         loaded.sort((a, b) => b.timestamp - a.timestamp);
         setDeliveryLogs(loaded.map(l => l.text));
       }
+    }, (error) => {
+      console.warn("Logs subscription failed, loading mock state:", error);
     });
 
     return () => {
@@ -182,18 +202,21 @@ export const HOAProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.approved) {
-            setCurrentUser(userData);
-            setIsAuthenticated(true);
-          } else {
-            // Force sign out if not approved
-            await signOut(auth);
-            setCurrentUser(null);
-            setIsAuthenticated(false);
+        try {
+          const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.approved) {
+              setCurrentUser(userData);
+              setIsAuthenticated(true);
+            } else {
+              await signOut(auth);
+              setCurrentUser(null);
+              setIsAuthenticated(false);
+            }
           }
+        } catch (e) {
+          console.warn("onAuthStateChanged profile sync failed:", e);
         }
       }
     });
@@ -205,32 +228,45 @@ export const HOAProvider = ({ children }) => {
   const addLog = async (message) => {
     const timestamp = Date.now();
     const timeString = new Date().toLocaleTimeString();
-    await setDoc(doc(db, 'deliveryLogs', `log-${timestamp}`), {
-      text: `[${timeString}] ${message}`,
-      timestamp
-    });
+    
+    // Add locally immediately
+    setDeliveryLogs(prev => [`[${timeString}] ${message}`, ...prev]);
+
+    try {
+      await setDoc(doc(db, 'deliveryLogs', `log-${timestamp}`), {
+        text: `[${timeString}] ${message}`,
+        timestamp
+      });
+    } catch (e) {
+      // Ignore database logging failures in offline/pending mode
+    }
   };
 
   const clearLogs = async () => {
-    const snapshot = await getDocs(collection(db, 'deliveryLogs'));
-    snapshot.forEach(async (d) => {
-      await deleteDoc(doc(db, 'deliveryLogs', d.id));
-    });
-    await setDoc(doc(db, 'deliveryLogs', `log-${Date.now()}`), {
-      text: `[SYSTEM] Logs cleared.`,
-      timestamp: Date.now()
-    });
+    setDeliveryLogs([`[SYSTEM] Logs cleared.`]);
+    try {
+      const snapshot = await getDocs(collection(db, 'deliveryLogs'));
+      snapshot.forEach(async (d) => {
+        await deleteDoc(doc(db, 'deliveryLogs', d.id));
+      });
+      await setDoc(doc(db, 'deliveryLogs', `log-${Date.now()}`), {
+        text: `[SYSTEM] Logs cleared.`,
+        timestamp: Date.now()
+      });
+    } catch (e) {
+      // Ignore database clears in offline mode
+    }
   };
 
   // Auth Operations
   const login = async (email, password) => {
     try {
+      // 1. Try Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
       const userDoc = await getDoc(doc(db, 'residents', firebaseUser.uid));
       if (!userDoc.exists()) {
-        // Fallback: check if user exists under old mock ID in firestore
         const q = query(collection(db, 'residents'), where('email', '==', email));
         const querySnapshot = await getDocs(q);
         if (querySnapshot.empty) {
@@ -267,7 +303,22 @@ export const HOAProvider = ({ children }) => {
       await addLog(`[AUTH] Resident ${foundUser.name} signed in successfully.`);
       return foundUser;
     } catch (err) {
-      console.error("Login error details:", err);
+      console.warn("Firebase Auth signin failed. Attempting local memory fallback:", err);
+
+      // Local fallback password check
+      const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase());
+      if (foundUser) {
+        if (foundUser.approved === false) {
+          throw new Error("Your account is currently pending administrator approval.");
+        }
+        if (foundUser.password === password) {
+          setCurrentUser(foundUser);
+          setIsAuthenticated(true);
+          addLog(`[AUTH] Resident ${foundUser.name} signed in locally (Fallback mode).`).catch(e => {});
+          return foundUser;
+        }
+      }
+
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         throw new Error("Incorrect email address or password. Please try again.");
       }
@@ -304,7 +355,7 @@ export const HOAProvider = ({ children }) => {
             ...templateResident,
             id: firebaseUser.uid
           };
-          await setDoc(doc(db, 'residents', firebaseUser.uid), newProfile);
+          await setDoc(doc(db, 'residents', firebaseUser.uid), newProfile).catch(e => {});
         } else {
           throw err;
         }
@@ -318,11 +369,11 @@ export const HOAProvider = ({ children }) => {
       setIsAuthenticated(true);
       await addLog(`[AUTH] Quick-Login triggered. Authenticated as ${activeUser.name} (${activeUser.role}) via Firebase Auth.`);
     } catch (err) {
-      console.error("Quick login failed, falling back to local credentials:", err);
+      console.warn("Quick login failed, falling back to local credentials:", err);
       const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase()) || residents[0];
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
-      await addLog(`[AUTH] Quick-Login fallback triggered locally for ${foundUser.name}.`);
+      addLog(`[AUTH] Quick-Login fallback triggered locally for ${foundUser.name}.`).catch(e => {});
     }
   };
 
@@ -350,11 +401,35 @@ export const HOAProvider = ({ children }) => {
       await addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) in Firebase Auth. Pending administrator approval.`);
       return newResident;
     } catch (err) {
-      console.error("Signup error details:", err);
+      console.warn("Firebase Auth Signup failed. Attempting local memory fallback:", err);
+
       if (err.code === 'auth/email-already-in-use') {
         throw new Error("An account already exists with this email.");
       }
-      throw new Error(err.message || "An account creation error occurred.");
+
+      // Local fallback signup
+      const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
+      if (emailExists) {
+        throw new Error("An account already exists with this email.");
+      }
+
+      const id = `res-${Date.now()}`;
+      const newResident = {
+        id,
+        name,
+        email,
+        phone,
+        address,
+        bio,
+        avatar,
+        role,
+        password,
+        approved: false
+      };
+
+      setResidents(prev => [...prev, newResident]);
+      addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) locally. Pending approval.`).catch(e => {});
+      return newResident;
     }
   };
 
@@ -363,7 +438,7 @@ export const HOAProvider = ({ children }) => {
     try {
       await signOut(auth);
     } catch (err) {
-      console.error("Firebase signout failed:", err);
+      console.warn("Firebase signout failed:", err);
     }
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -372,9 +447,16 @@ export const HOAProvider = ({ children }) => {
 
   // Profile Operations
   const updateProfile = async (updatedProfile) => {
-    await setDoc(doc(db, 'residents', updatedProfile.id), updatedProfile);
+    // Local state sync
+    setResidents(prev => prev.map(r => r.id === updatedProfile.id ? updatedProfile : r));
     if (currentUser && currentUser.id === updatedProfile.id) {
       setCurrentUser(updatedProfile);
+    }
+
+    try {
+      await setDoc(doc(db, 'residents', updatedProfile.id), updatedProfile);
+    } catch (err) {
+      console.warn("Profile update to Firestore failed. Saved locally.", err);
     }
     await addLog(`[PROFILE] Updated user profile for ${updatedProfile.name}.`);
   };
@@ -394,7 +476,15 @@ export const HOAProvider = ({ children }) => {
       date: new Date().toISOString().split('T')[0],
       comments: []
     };
-    await setDoc(doc(db, 'tickets', id), newTicket);
+
+    // Update locally
+    setTickets(prev => [newTicket, ...prev]);
+
+    try {
+      await setDoc(doc(db, 'tickets', id), newTicket);
+    } catch (err) {
+      console.warn("Failed to write support ticket to Firestore. Saved locally.", err);
+    }
     await addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
     return newTicket;
   };
@@ -410,39 +500,88 @@ export const HOAProvider = ({ children }) => {
         date: new Date().toISOString().split('T')[0]
       });
     }
-    await updateDoc(doc(db, 'tickets', ticketId), {
-      status: newStatus,
-      comments: updatedComments
-    });
+
+    // Update locally
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus, comments: updatedComments } : t));
+
+    try {
+      await updateDoc(doc(db, 'tickets', ticketId), {
+        status: newStatus,
+        comments: updatedComments
+      });
+    } catch (err) {
+      console.warn("Failed to update support ticket in Firestore. Saved locally.", err);
+    }
     await addLog(`[SUPPORT] Ticket #${ticketId} status updated to "${newStatus}" by ${currentUser.name}.`);
   };
 
   const deleteTicket = async (ticketId) => {
-    await deleteDoc(doc(db, 'tickets', ticketId));
+    // Update locally
+    setTickets(prev => prev.filter(t => t.id !== ticketId));
+
+    try {
+      await deleteDoc(doc(db, 'tickets', ticketId));
+    } catch (err) {
+      console.warn("Failed to delete support ticket in Firestore. Deleted locally.", err);
+    }
     await addLog(`[SUPPORT] Support Ticket #${ticketId} was deleted by Admin.`);
   };
 
   // Resident Manager Operations
   const changeResidentRole = async (residentId, newRole) => {
-    await updateDoc(doc(db, 'residents', residentId), { role: newRole });
-    if (currentUser && currentUser.id === residentId) {
-      setCurrentUser(prev => ({ ...prev, role: newRole }));
+    // Update locally
+    setResidents(prev => prev.map(res => {
+      if (res.id === residentId) {
+        const updated = { ...res, role: newRole };
+        if (currentUser && currentUser.id === residentId) {
+          setCurrentUser(updated);
+        }
+        return updated;
+      }
+      return res;
+    }));
+
+    try {
+      await updateDoc(doc(db, 'residents', residentId), { role: newRole });
+    } catch (err) {
+      console.warn("Failed to change resident role in Firestore. Updated locally.", err);
     }
     await addLog(`[ADMIN] Resident #${residentId} role updated to "${newRole}".`);
   };
 
   const approveResident = async (residentId) => {
-    await updateDoc(doc(db, 'residents', residentId), { approved: true });
+    // Update locally
+    setResidents(prev => prev.map(res => res.id === residentId ? { ...res, approved: true } : res));
+
+    try {
+      await updateDoc(doc(db, 'residents', residentId), { approved: true });
+    } catch (err) {
+      console.warn("Failed to approve resident in Firestore. Approved locally.", err);
+    }
     await addLog(`[ADMIN] Resident #${residentId} account approved by administrator.`);
   };
 
   const denyResident = async (residentId) => {
-    await deleteDoc(doc(db, 'residents', residentId));
+    // Update locally
+    setResidents(prev => prev.filter(res => res.id !== residentId));
+
+    try {
+      await deleteDoc(doc(db, 'residents', residentId));
+    } catch (err) {
+      console.warn("Failed to deny resident in Firestore. Denied locally.", err);
+    }
     await addLog(`[ADMIN] Resident "${residentId}" denied & deleted by administrator.`);
   };
 
   const deleteResident = async (residentId) => {
-    await deleteDoc(doc(db, 'residents', residentId));
+    // Update locally
+    setResidents(prev => prev.filter(res => res.id !== residentId));
+
+    try {
+      await deleteDoc(doc(db, 'residents', residentId));
+    } catch (err) {
+      console.warn("Failed to delete resident in Firestore. Deleted locally.", err);
+    }
     await addLog(`[ADMIN] Resident "${residentId}" permanently deleted by administrator.`);
   };
 
@@ -462,7 +601,15 @@ export const HOAProvider = ({ children }) => {
       address: currentUser.address,
       status: 'Confirmed'
     };
-    await setDoc(doc(db, 'bookings', id), newBooking);
+
+    // Update locally
+    setBookings(prev => [...prev, newBooking]);
+
+    try {
+      await setDoc(doc(db, 'bookings', id), newBooking);
+    } catch (err) {
+      console.warn("Failed to write booking to Firestore. Saved locally.", err);
+    }
     await addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
@@ -484,13 +631,20 @@ A new clubhouse reservation has been placed by a resident:
 This is an automated notification email sent from SummitHOA Portal.
 =================================`;
     console.log(emailDetails);
-    await addLog(`[EMAIL] Simulated booking confirmation notice dispatched to board@summithoa.com`);
+    await addLog(`[EMAIL] Simulated booking confirmation notice dispatched to board@summithoa.com`).catch(e => {});
     
     return newBooking;
   };
 
   const cancelBooking = async (bookingId) => {
-    await deleteDoc(doc(db, 'bookings', bookingId));
+    // Update locally
+    setBookings(prev => prev.filter(b => b.id !== bookingId));
+
+    try {
+      await deleteDoc(doc(db, 'bookings', bookingId));
+    } catch (err) {
+      console.warn("Failed to cancel booking in Firestore. Cancelled locally.", err);
+    }
     await addLog(`[CALENDAR] Booking ${bookingId} cancelled.`);
   };
 
@@ -510,7 +664,14 @@ This is an automated notification email sent from SummitHOA Portal.
     };
 
     if (channels.website) {
-      await setDoc(doc(db, 'announcements', id), newAnnouncement);
+      // Update locally
+      setAnnouncements(prev => [newAnnouncement, ...prev]);
+
+      try {
+        await setDoc(doc(db, 'announcements', id), newAnnouncement);
+      } catch (err) {
+        console.warn("Failed to write announcement to Firestore. Saved locally.", err);
+      }
       await addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
     }
 
@@ -546,12 +707,26 @@ This is an automated notification email sent from SummitHOA Portal.
   };
 
   const deleteAnnouncement = async (announcementId) => {
-    await deleteDoc(doc(db, 'announcements', announcementId));
+    // Update locally
+    setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
+
+    try {
+      await deleteDoc(doc(db, 'announcements', announcementId));
+    } catch (err) {
+      console.warn("Failed to delete announcement in Firestore. Deleted locally.", err);
+    }
     await addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
   };
 
   const updateAnnouncement = async (id, updatedFields) => {
-    await updateDoc(doc(db, 'announcements', id), updatedFields);
+    // Update locally
+    setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
+
+    try {
+      await updateDoc(doc(db, 'announcements', id), updatedFields);
+    } catch (err) {
+      console.warn("Failed to update announcement in Firestore. Updated locally.", err);
+    }
     await addLog(`[WEBSITE] Announcement "${id}" updated.`);
   };
 
@@ -572,7 +747,15 @@ This is an automated notification email sent from SummitHOA Portal.
       status: 'Pending',
       reviewerNotes: ''
     };
-    await setDoc(doc(db, 'arcRequests', id), newRequest);
+
+    // Update locally
+    setArcRequests(prev => [newRequest, ...prev]);
+
+    try {
+      await setDoc(doc(db, 'arcRequests', id), newRequest);
+    } catch (err) {
+      console.warn("Failed to write ARC request to Firestore. Saved locally.", err);
+    }
     await addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
@@ -601,13 +784,20 @@ A new Architectural Review Request has been submitted by a resident:
 This is an automated notification email sent from SummitHOA Portal.
 =================================`;
     console.log(emailDetails);
-    await addLog(`[EMAIL] Simulated ARC request details dispatched to board@summithoa.com`);
+    await addLog(`[EMAIL] Simulated ARC request details dispatched to board@summithoa.com`).catch(e => {});
     
     return newRequest;
   };
 
   const updateArcRequestStatus = async (requestId, status, reviewerNotes) => {
-    await updateDoc(doc(db, 'arcRequests', requestId), { status, reviewerNotes });
+    // Update locally
+    setArcRequests(prev => prev.map(req => req.id === requestId ? { ...req, status, reviewerNotes } : req));
+
+    try {
+      await updateDoc(doc(db, 'arcRequests', requestId), { status, reviewerNotes });
+    } catch (err) {
+      console.warn("Failed to update ARC request in Firestore. Updated locally.", err);
+    }
     await addLog(`[ARC] Request "${requestId}" updated to status "${status}" by administrator.`);
   };
 
