@@ -1,11 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CloseIcon } from './Icons';
 
 export default function Modal({ isOpen, onClose, title, children }) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // Reset position when opening
+      setPosition({ x: 0, y: 0 });
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -13,6 +19,70 @@ export default function Modal({ isOpen, onClose, title, children }) {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  const handleMouseDown = (e) => {
+    // Left-click only, exclude close button clicks
+    if (e.button !== 0) return;
+    if (e.target.closest('.modal-close-btn')) return;
+
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+    e.preventDefault();
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.target.closest('.modal-close-btn')) return;
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragStart({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    });
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      setPosition({
+        x: touch.clientX - dragStart.x,
+        y: touch.clientY - dragStart.y
+      });
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: true });
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging, dragStart]);
 
   if (!isOpen) return null;
 
@@ -24,8 +94,19 @@ export default function Modal({ isOpen, onClose, title, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          position: 'relative',
+          cursor: isDragging ? 'grabbing' : 'default',
+          transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+        }}
       >
-        <div className="modal-header">
+        <div 
+          className="modal-header"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          style={{ cursor: 'grab', userSelect: 'none' }}
+        >
           <h2 id="modal-title">{title}</h2>
           <button 
             className="modal-close-btn"
