@@ -375,6 +375,9 @@ export const HOAProvider = ({ children }) => {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         throw new Error("Incorrect email address or password. Please try again.");
       }
+      if (err.code === 'auth/operation-not-allowed') {
+        throw new Error("Email/Password logins are not enabled. Please enable the Email/Password provider under Authentication > Sign-in method in your Firebase Console.");
+      }
       throw new Error(err.message || "An authentication error occurred.");
     }
   };
@@ -454,35 +457,48 @@ export const HOAProvider = ({ children }) => {
       await addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) in Firebase Auth. Pending administrator approval.`);
       return newResident;
     } catch (err) {
-      console.warn("Firebase Auth Signup failed. Attempting local memory fallback:", err);
+      console.warn("Firebase Auth Signup failed:", err);
 
       if (err.code === 'auth/email-already-in-use') {
         throw new Error("An account already exists with this email.");
       }
-
-      // Local fallback signup
-      const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
-      if (emailExists) {
-        throw new Error("An account already exists with this email.");
+      if (err.code === 'auth/weak-password') {
+        throw new Error("Password must be at least 6 characters long.");
+      }
+      if (err.code === 'auth/invalid-email') {
+        throw new Error("Please enter a valid email address.");
+      }
+      if (err.code === 'auth/operation-not-allowed') {
+        throw new Error("Email/Password registration is not enabled. Please enable the Email/Password provider under Authentication > Sign-in method in your Firebase Console.");
       }
 
-      const id = `res-${Date.now()}`;
-      const newResident = {
-        id,
-        name,
-        email,
-        phone,
-        address,
-        bio,
-        avatar,
-        role,
-        password,
-        approved: false
-      };
+      // Local fallback signup only if it is a connection/network issue
+      if (err.code === 'auth/network-request-failed' || err.message.includes('network') || err.message.includes('configuration')) {
+        const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
+        if (emailExists) {
+          throw new Error("An account already exists with this email.");
+        }
 
-      setResidents(prev => [...prev, newResident]);
-      addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) locally. Pending approval.`).catch(e => {});
-      return newResident;
+        const id = `res-${Date.now()}`;
+        const newResident = {
+          id,
+          name,
+          email,
+          phone,
+          address,
+          bio,
+          avatar,
+          role,
+          password,
+          approved: false
+        };
+
+        setResidents(prev => [...prev, newResident]);
+        addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) locally. Pending approval.`).catch(e => {});
+        return newResident;
+      }
+
+      throw new Error(err.message || "An account creation error occurred.");
     }
   };
 
