@@ -54,17 +54,21 @@ export default function Notifications() {
     setEditImage(ann.image || null);
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    updateAnnouncement(editingAnnouncement.id, {
-      title: editTitle,
-      content: editContent,
-      category: editCategory,
-      eventDate: editCategory === 'Event' ? editEventDate : '',
-      eventTime: editCategory === 'Event' ? editEventTime : '',
-      image: editImage
-    });
-    setEditingAnnouncement(null);
+    try {
+      await updateAnnouncement(editingAnnouncement.id, {
+        title: editTitle,
+        content: editContent,
+        category: editCategory,
+        eventDate: editCategory === 'Event' ? editEventDate : '',
+        eventTime: editCategory === 'Event' ? editEventTime : '',
+        image: editImage
+      });
+      setEditingAnnouncement(null);
+    } catch (err) {
+      alert(err.message || "Failed to update announcement");
+    }
   };
 
   const handleChannelChange = (e) => {
@@ -72,30 +76,34 @@ export default function Notifications() {
     setChannels(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!channels.website && !channels.email) {
       alert("Please select at least one distribution channel.");
       return;
     }
     
-    addAnnouncement(
-      title, 
-      content, 
-      category, 
-      channels, 
-      category === 'Event' ? eventDate : '', 
-      category === 'Event' ? eventTime : '',
-      imagePreview
-    );
-    
-    // Reset Form
-    setTitle('');
-    setContent('');
-    setCategory('General');
-    setEventDate('');
-    setEventTime('');
-    setImagePreview(null);
+    try {
+      await addAnnouncement(
+        title, 
+        content, 
+        category, 
+        channels, 
+        category === 'Event' ? eventDate : '', 
+        category === 'Event' ? eventTime : '',
+        imagePreview
+      );
+      
+      // Reset Form
+      setTitle('');
+      setContent('');
+      setCategory('General');
+      setEventDate('');
+      setEventTime('');
+      setImagePreview(null);
+    } catch (err) {
+      alert(err.message || "Failed to publish announcement");
+    }
   };
 
   return (

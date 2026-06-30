@@ -74,17 +74,21 @@ export default function Admin() {
     setEditAnnImage(ann.image || null);
   };
 
-  const handleEditAnnSubmit = (e) => {
+  const handleEditAnnSubmit = async (e) => {
     e.preventDefault();
-    updateAnnouncement(editingAnnouncement.id, {
-      title: editAnnTitle,
-      content: editAnnContent,
-      category: editAnnCategory,
-      eventDate: editAnnCategory === 'Event' ? editAnnEventDate : '',
-      eventTime: editAnnCategory === 'Event' ? editAnnEventTime : '',
-      image: editAnnImage
-    });
-    setEditingAnnouncement(null);
+    try {
+      await updateAnnouncement(editingAnnouncement.id, {
+        title: editAnnTitle,
+        content: editAnnContent,
+        category: editAnnCategory,
+        eventDate: editAnnCategory === 'Event' ? editAnnEventDate : '',
+        eventTime: editAnnCategory === 'Event' ? editAnnEventTime : '',
+        image: editAnnImage
+      });
+      setEditingAnnouncement(null);
+    } catch (err) {
+      alert(err.message || "Failed to update announcement");
+    }
   };
 
   // Analytics Calculations
@@ -637,9 +641,13 @@ export default function Admin() {
                         <button 
                           className="btn btn-danger"
                           style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm(`Are you sure you want to permanently delete the announcement "${ann.title}"?`)) {
-                              deleteAnnouncement(ann.id);
+                              try {
+                                await deleteAnnouncement(ann.id);
+                              } catch (err) {
+                                alert(err.message || "Failed to delete announcement");
+                              }
                             }
                           }}
                           disabled={currentUser.role !== 'Admin'}

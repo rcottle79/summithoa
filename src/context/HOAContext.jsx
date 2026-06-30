@@ -743,15 +743,20 @@ This is an automated notification email sent from SummitHOA Portal.
     };
 
     if (channels.website) {
-      // Update locally
-      setAnnouncements(prev => [newAnnouncement, ...prev]);
-
       try {
         await setDoc(doc(db, 'announcements', id), newAnnouncement);
+        // Update locally only if write succeeds
+        setAnnouncements(prev => [newAnnouncement, ...prev]);
+        await addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
       } catch (err) {
-        console.warn("Failed to write announcement to Firestore. Saved locally.", err);
+        console.warn("Failed to write announcement to Firestore:", err);
+        if (err.code === 'unavailable' || err.message.includes('network')) {
+          setAnnouncements(prev => [newAnnouncement, ...prev]);
+          await addLog(`[WEBSITE] Announcement "${title}" published locally (Offline).`);
+        } else {
+          throw new Error(`Failed to publish announcement: ${err.message}`);
+        }
       }
-      await addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
     }
 
     const totalResidents = residents.length;
@@ -790,27 +795,35 @@ This is an automated notification email sent from SummitHOA Portal.
   };
 
   const deleteAnnouncement = async (announcementId) => {
-    // Update locally
-    setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
-
     try {
       await deleteDoc(doc(db, 'announcements', announcementId));
+      // Update locally only if write succeeds
+      setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
+      await addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
     } catch (err) {
-      console.warn("Failed to delete announcement in Firestore. Deleted locally.", err);
+      console.warn("Failed to delete announcement in Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
+      } else {
+        throw new Error(`Failed to delete announcement: ${err.message}`);
+      }
     }
-    await addLog(`[ADMIN] Announcement "${announcementId}" deleted by administrator.`);
   };
 
   const updateAnnouncement = async (id, updatedFields) => {
-    // Update locally
-    setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
-
     try {
       await updateDoc(doc(db, 'announcements', id), updatedFields);
+      // Update locally only if write succeeds
+      setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
+      await addLog(`[WEBSITE] Announcement "${id}" updated.`);
     } catch (err) {
-      console.warn("Failed to update announcement in Firestore. Updated locally.", err);
+      console.warn("Failed to update announcement in Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
+      } else {
+        throw new Error(`Failed to update announcement: ${err.message}`);
+      }
     }
-    await addLog(`[WEBSITE] Announcement "${id}" updated.`);
   };
 
   // ARC Requests Operations
