@@ -20,6 +20,7 @@ export default function Notifications() {
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -128,7 +129,12 @@ export default function Notifications() {
           
           <div className="announcements-stream">
             {announcements.map((ann) => (
-              <div key={ann.id} className="announcement-stream-card glass-card">
+              <div 
+                key={ann.id} 
+                className="announcement-stream-card glass-card clickable-card"
+                onClick={() => setSelectedAnnouncement(ann)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="stream-card-meta">
                   <span className={`badge ${
                     ann.category === 'Urgent' ? 'badge-danger' : 
@@ -151,23 +157,70 @@ export default function Notifications() {
                     <img src={ann.image} alt={ann.title} style={{ width: '100%', height: '100%', maxHeight: '350px', objectFit: 'cover' }} />
                   </div>
                 )}
-                <p className="stream-card-content">{ann.content}</p>
-                <div className="stream-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p className="stream-card-content" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {ann.content}
+                </p>
+                <div className="stream-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
                   <span>Author: {ann.author}</span>
-                  {(currentUser.role === 'Admin' || currentUser.name === ann.author) && (
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ minHeight: '28px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                      onClick={() => handleEditClick(ann)}
-                    >
-                      Edit Notice
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline', marginRight: '0.5rem' }}>Read Details</span>
+                    {(currentUser.role === 'Admin' || currentUser.name === ann.author) && (
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ minHeight: '28px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(ann);
+                        }}
+                      >
+                        Edit Notice
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
             {announcements.length === 0 && (
               <div className="empty-feed">No announcements published to the website.</div>
+            )}
+
+            {selectedAnnouncement && (
+              <Modal 
+                isOpen={!!selectedAnnouncement} 
+                onClose={() => setSelectedAnnouncement(null)} 
+                title="Announcement Details"
+              >
+                <div className="announcement-detail-modal" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className={`badge ${
+                      selectedAnnouncement.category === 'Urgent' ? 'badge-danger' :
+                      selectedAnnouncement.category === 'Maintenance' ? 'badge-warning' :
+                      selectedAnnouncement.category === 'Event' ? 'badge-success' : 'badge-info'
+                    }`}>
+                      {selectedAnnouncement.category}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Published: {selectedAnnouncement.date}</span>
+                  </div>
+                  <h2 style={{ fontSize: '1.5rem', marginBottom: '0', color: 'var(--text-primary)' }}>{selectedAnnouncement.title}</h2>
+                  {selectedAnnouncement.category === 'Event' && selectedAnnouncement.eventDate && (
+                    <div className="event-date-tag" style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(16, 185, 129, 0.08)', padding: '0.5rem 0.75rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                      📅 Event Date: {new Date(selectedAnnouncement.eventDate + 'T00:00:00').toLocaleDateString('en-US', { dateStyle: 'full' })}
+                      {selectedAnnouncement.eventTime && ` at ${selectedAnnouncement.eventTime}`}
+                    </div>
+                  )}
+                  {selectedAnnouncement.image && (
+                    <div style={{ borderRadius: 'var(--border-radius-md)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '400px' }}>
+                      <img src={selectedAnnouncement.image} alt={selectedAnnouncement.title} style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', background: '#090d16' }} />
+                    </div>
+                  )}
+                  <p style={{ whiteSpace: 'pre-line', lineHeight: '1.7', color: 'var(--text-secondary)', fontSize: '0.975rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)', maxHeight: '200px', overflowY: 'auto' }}>
+                    {selectedAnnouncement.content}
+                  </p>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', textAlign: 'right' }}>
+                    Written by: <strong>{selectedAnnouncement.author}</strong>
+                  </div>
+                </div>
+              </Modal>
             )}
           </div>
         </div>

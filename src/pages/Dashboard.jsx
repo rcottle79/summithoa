@@ -1,9 +1,11 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { SupportIcon, BookingIcon, NotificationIcon, HomeIcon, DollarIcon } from '../components/Icons';
+import Modal from '../components/Modal';
 
 export default function Dashboard({ setActiveTab }) {
   const { currentUser, tickets, bookings, announcements } = useContext(HOAContext);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   // Filter calculations
   const activeTicketsCount = tickets.filter(t => t.status !== 'Resolved').length;
@@ -72,31 +74,81 @@ export default function Dashboard({ setActiveTab }) {
             <button className="text-btn" onClick={() => setActiveTab('notifications')}>View All</button>
           </div>
           {latestAnnouncement ? (
-            <div className="latest-announcement-card">
-              <div className="announcement-meta">
-                <span className={`badge ${
-                  latestAnnouncement.category === 'Event' ? 'badge-success' : 
-                  latestAnnouncement.category === 'Maintenance' ? 'badge-warning' : 'badge-info'
-                }`}>
-                  {latestAnnouncement.category}
-                </span>
-                <span className="meta-date">{latestAnnouncement.date}</span>
+            <>
+              <div 
+                className="latest-announcement-card clickable-card" 
+                onClick={() => setSelectedAnnouncement(latestAnnouncement)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="announcement-meta">
+                  <span className={`badge ${
+                    latestAnnouncement.category === 'Event' ? 'badge-success' : 
+                    latestAnnouncement.category === 'Maintenance' ? 'badge-warning' : 'badge-info'
+                  }`}>
+                    {latestAnnouncement.category}
+                  </span>
+                  <span className="meta-date">{latestAnnouncement.date}</span>
+                </div>
+                <h3 className="announcement-title">{latestAnnouncement.title}</h3>
+                {latestAnnouncement.category === 'Event' && latestAnnouncement.eventDate && (
+                  <div className="event-date-tag" style={{ marginTop: '0.25rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    📅 Event Date: {new Date(latestAnnouncement.eventDate + 'T00:00:00').toLocaleDateString('en-US', { dateStyle: 'long' })}
+                    {latestAnnouncement.eventTime && ` at ${latestAnnouncement.eventTime}`}
+                  </div>
+                )}
+                {latestAnnouncement.image && (
+                  <div className="announcement-image-container animate-fade-in" style={{ marginBottom: '1.25rem', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '350px' }}>
+                    <img src={latestAnnouncement.image} alt={latestAnnouncement.title} style={{ width: '100%', height: '100%', maxHeight: '350px', objectFit: 'cover' }} />
+                  </div>
+                )}
+                <p className="announcement-body" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {latestAnnouncement.content}
+                </p>
+                <div className="announcement-author" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <span>Posted by: {latestAnnouncement.author}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}>Read Details</span>
+                </div>
               </div>
-              <h3 className="announcement-title">{latestAnnouncement.title}</h3>
-              {latestAnnouncement.category === 'Event' && latestAnnouncement.eventDate && (
-                <div className="event-date-tag" style={{ marginTop: '0.25rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  📅 Event Date: {new Date(latestAnnouncement.eventDate + 'T00:00:00').toLocaleDateString('en-US', { dateStyle: 'long' })}
-                  {latestAnnouncement.eventTime && ` at ${latestAnnouncement.eventTime}`}
-                </div>
+
+              {selectedAnnouncement && (
+                <Modal 
+                  isOpen={!!selectedAnnouncement} 
+                  onClose={() => setSelectedAnnouncement(null)} 
+                  title="Announcement Details"
+                >
+                  <div className="announcement-detail-modal" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className={`badge ${
+                        selectedAnnouncement.category === 'Urgent' ? 'badge-danger' :
+                        selectedAnnouncement.category === 'Maintenance' ? 'badge-warning' :
+                        selectedAnnouncement.category === 'Event' ? 'badge-success' : 'badge-info'
+                      }`}>
+                        {selectedAnnouncement.category}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Published: {selectedAnnouncement.date}</span>
+                    </div>
+                    <h2 style={{ fontSize: '1.5rem', marginBottom: '0', color: 'var(--text-primary)' }}>{selectedAnnouncement.title}</h2>
+                    {selectedAnnouncement.category === 'Event' && selectedAnnouncement.eventDate && (
+                      <div className="event-date-tag" style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(16, 185, 129, 0.08)', padding: '0.5rem 0.75rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                        📅 Event Date: {new Date(selectedAnnouncement.eventDate + 'T00:00:00').toLocaleDateString('en-US', { dateStyle: 'full' })}
+                        {selectedAnnouncement.eventTime && ` at ${selectedAnnouncement.eventTime}`}
+                      </div>
+                    )}
+                    {selectedAnnouncement.image && (
+                      <div style={{ borderRadius: 'var(--border-radius-md)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '400px' }}>
+                        <img src={selectedAnnouncement.image} alt={selectedAnnouncement.title} style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', background: '#090d16' }} />
+                      </div>
+                    )}
+                    <p style={{ whiteSpace: 'pre-line', lineHeight: '1.7', color: 'var(--text-secondary)', fontSize: '0.975rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)', maxHeight: '200px', overflowY: 'auto' }}>
+                      {selectedAnnouncement.content}
+                    </p>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', textAlign: 'right' }}>
+                      Written by: <strong>{selectedAnnouncement.author}</strong>
+                    </div>
+                  </div>
+                </Modal>
               )}
-              {latestAnnouncement.image && (
-                <div className="announcement-image-container animate-fade-in" style={{ marginBottom: '1.25rem', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)', maxHeight: '350px' }}>
-                  <img src={latestAnnouncement.image} alt={latestAnnouncement.title} style={{ width: '100%', height: '100%', maxHeight: '350px', objectFit: 'cover' }} />
-                </div>
-              )}
-              <p className="announcement-body">{latestAnnouncement.content}</p>
-              <div className="announcement-author">Posted by: {latestAnnouncement.author}</div>
-            </div>
+            </>
           ) : (
             <div className="empty-state">No announcements posted yet.</div>
           )}
