@@ -5,16 +5,23 @@ import { CheckIcon } from '../components/Icons';
 export default function Booking() {
   const { currentUser, bookings, addBooking, cancelBooking } = useContext(HOAContext);
   
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getMinDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return formatLocalDate(tomorrow);
   };
 
   const getMaxDate = () => {
     const max = new Date();
     max.setMonth(max.getMonth() + 6);
-    return max.toISOString().split('T')[0];
+    return formatLocalDate(max);
   };
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -84,7 +91,7 @@ export default function Booking() {
       const d = new Date();
       d.setDate(d.getDate() + i);
       dates.push({
-        dateString: d.toISOString().split('T')[0],
+        dateString: formatLocalDate(d),
         dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
         dayNum: d.getDate(),
         month: d.toLocaleDateString('en-US', { month: 'short' })
@@ -182,7 +189,7 @@ export default function Booking() {
               {getDaysInMonthGrid().map((day, idx) => {
                 if (!day) return <div key={`empty-${idx}`} className="calendar-day-empty" />;
                 
-                const dateString = day.toISOString().split('T')[0];
+                const dateString = formatLocalDate(day);
                 const disabled = isDateDisabled(day);
                 const selected = selectedDate === dateString;
                 
