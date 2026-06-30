@@ -26,24 +26,28 @@ export default function Tickets() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    addTicket(
-      formData.title,
-      formData.description,
-      formData.category,
-      formData.location,
-      formData.urgency
-    );
-    // Reset Form
-    setFormData({
-      title: '',
-      description: '',
-      category: 'Plumbing',
-      location: '',
-      urgency: 'Medium'
-    });
-    setIsSubmitModalOpen(false);
+    try {
+      await addTicket(
+        formData.title,
+        formData.description,
+        formData.category,
+        formData.location,
+        formData.urgency
+      );
+      // Reset Form
+      setFormData({
+        title: '',
+        description: '',
+        category: 'Plumbing',
+        location: '',
+        urgency: 'Medium'
+      });
+      setIsSubmitModalOpen(false);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleStatusUpdate = (ticketId, newStatus) => {

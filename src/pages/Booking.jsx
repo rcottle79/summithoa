@@ -101,9 +101,9 @@ export default function Booking() {
     evening: bookings.find(b => b.date === selectedDate && b.slot === '6:00 PM - 9:00 PM')
   };
 
-  const handleBookSlot = (slot) => {
+  const handleBookSlot = async (slot) => {
     try {
-      addBooking(selectedDate, slot);
+      await addBooking(selectedDate, slot);
     } catch (err) {
       alert(err.message);
     }

@@ -546,15 +546,20 @@ export const HOAProvider = ({ children }) => {
       comments: []
     };
 
-    // Update locally
-    setTickets(prev => [newTicket, ...prev]);
-
     try {
       await setDoc(doc(db, 'tickets', id), newTicket);
+      // Update locally only if write succeeds
+      setTickets(prev => [newTicket, ...prev]);
+      await addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
     } catch (err) {
-      console.warn("Failed to write support ticket to Firestore. Saved locally.", err);
+      console.warn("Failed to write support ticket to Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setTickets(prev => [newTicket, ...prev]);
+        await addLog(`[SUPPORT] Support ticket "${title}" filed locally (Offline) by ${currentUser.name}.`);
+        return newTicket;
+      }
+      throw new Error(`Failed to submit support ticket: ${err.message}`);
     }
-    await addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
     return newTicket;
   };
 
@@ -671,15 +676,20 @@ export const HOAProvider = ({ children }) => {
       status: 'Confirmed'
     };
 
-    // Update locally
-    setBookings(prev => [...prev, newBooking]);
-
     try {
       await setDoc(doc(db, 'bookings', id), newBooking);
+      // Update locally only if write succeeds
+      setBookings(prev => [...prev, newBooking]);
+      await addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
     } catch (err) {
-      console.warn("Failed to write booking to Firestore. Saved locally.", err);
+      console.warn("Failed to write booking to Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setBookings(prev => [...prev, newBooking]);
+        await addLog(`[CALENDAR] Clubhouse booked locally (Offline) for ${date} during ${slot}.`);
+        return newBooking;
+      }
+      throw new Error(`Failed to save reservation: ${err.message}`);
     }
-    await addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
     const emailDetails = `
@@ -821,15 +831,20 @@ This is an automated notification email sent from SummitHOA Portal.
       reviewerNotes: ''
     };
 
-    // Update locally
-    setArcRequests(prev => [newRequest, ...prev]);
-
     try {
       await setDoc(doc(db, 'arcRequests', id), newRequest);
+      // Update locally only if write succeeds
+      setArcRequests(prev => [newRequest, ...prev]);
+      await addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
     } catch (err) {
-      console.warn("Failed to write ARC request to Firestore. Saved locally.", err);
+      console.warn("Failed to write ARC request to Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setArcRequests(prev => [newRequest, ...prev]);
+        await addLog(`[ARC] ARC request for ${projectType} filed locally (Offline) by ${currentUser.name}.`);
+        return newRequest;
+      }
+      throw new Error(`Failed to submit ARC request: ${err.message}`);
     }
-    await addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
     
     // Dispatch simulated notification email to board@summithoa.com
     const docList = documents && documents.length > 0 

@@ -41,20 +41,24 @@ export default function ArcRequests() {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmitRequest = (e) => {
+  const handleSubmitRequest = async (e) => {
     e.preventDefault();
     if (!description.trim()) {
       alert("Please provide a project description.");
       return;
     }
 
-    addArcRequest(projectType, description, attachedFiles);
-    
-    // Reset Form
-    setProjectType('Deck');
-    setDescription('');
-    setAttachedFiles([]);
-    alert("Architectural Review Request submitted successfully! It is pending board approval.");
+    try {
+      await addArcRequest(projectType, description, attachedFiles);
+      
+      // Reset Form
+      setProjectType('Deck');
+      setDescription('');
+      setAttachedFiles([]);
+      alert("Architectural Review Request submitted successfully! It is pending board approval.");
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleOpenReview = (req) => {
