@@ -84,23 +84,7 @@ export default function Booking() {
     return grid;
   };
 
-  // Generate date list for the next 7 days
-  const getNext7Days = () => {
-    const dates = [];
-    for (let i = 1; i <= 7; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      dates.push({
-        dateString: formatLocalDate(d),
-        dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        dayNum: d.getDate(),
-        month: d.toLocaleDateString('en-US', { month: 'short' })
-      });
-    }
-    return dates;
-  };
 
-  const nextDays = getNext7Days();
 
   // Find bookings for the selected date
   const slotsForDate = {
@@ -133,26 +117,9 @@ export default function Booking() {
         {/* Interactive Native Calendar Picker */}
         <div className="calendar-panel glass-panel">
           <h2>Select Reservation Date</h2>
-          <p className="section-desc">Reservations can be placed up to 6 months in advance. Choose a quick date below or use the calendar.</p>
-          
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Quick Select (Next 7 Days)</h3>
-            <div className="date-picker-grid">
-              {nextDays.map((day) => (
-                <div
-                  key={day.dateString}
-                  className={`date-cell ${selectedDate === day.dateString ? 'selected' : ''}`}
-                  onClick={() => setSelectedDate(day.dateString)}
-                >
-                  <span className="month-name">{day.month}</span>
-                  <span className="day-number">{day.dayNum}</span>
-                  <span className="day-name">{day.dayName}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="section-desc">Reservations can be placed up to 6 months in advance. Select a date below using the calendar.</p>
 
-          <div className="custom-calendar-container" style={{ borderTop: '1px solid var(--border-color)', marginTop: '1.5rem', paddingTop: '1.5rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: 'var(--border-radius-sm)' }}>
+          <div className="custom-calendar-container" style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: 'var(--border-radius-sm)' }}>
             <div className="calendar-month-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <button 
                 type="button" 
