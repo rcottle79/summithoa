@@ -1,11 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BylawsIcon, SearchIcon } from '../components/Icons';
 
 export default function Bylaws() {
   const [activeSubTab, setActiveSubTab] = useState('explorer'); // 'explorer' or 'pdf'
   const [searchTerm, setSearchTerm] = useState('');
   const [activeArticle, setActiveArticle] = useState('art-2'); // default to definitions
-  
+
+  // Scroll to section helper
+  const scrollToSection = (id) => {
+    setActiveArticle(id);
+    setSearchTerm('');
+    setTimeout(() => {
+      const element = document.getElementById(`section-${id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+  };
+
+  // Scrollspy listener to highlight TOC sidebar item on scroll
+  useEffect(() => {
+    if (activeSubTab !== 'explorer' || searchTerm) return;
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '-10% 0px -75% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id.replace('section-', '');
+          setActiveArticle(id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    covenants.forEach(item => {
+      const el = document.getElementById(`section-${item.id}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeSubTab, searchTerm]);
+
   // PDF state
   const [pdfPage, setPdfPage] = useState(1);
   const [pdfZoom, setPdfZoom] = useState(100);
@@ -134,7 +176,7 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
     return null;
   }).filter(Boolean);
 
-  const activeDoc = covenants.find(c => c.id === activeArticle);
+
 
   return (
     <div className="bylaws-page-container animate-fade-in">
@@ -179,10 +221,7 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
                 <button
                   key={item.id}
                   className={`toc-item ${activeArticle === item.id ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveArticle(item.id);
-                    setSearchTerm(''); // Clear search on explicit select
-                  }}
+                  onClick={() => scrollToSection(item.id)}
                 >
                   {item.title}
                 </button>
@@ -219,18 +258,26 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
                 </div>
               </div>
             ) : (
-              // Normal article reading mode
+              // Normal article reading mode: render all articles stacked
               <div className="article-reading-mode">
-                <div className="article-meta">
-                  <span className="badge badge-success">Official HOA Document</span>
-                  <span className="doc-cite">Book 1374, Page 342-377</span>
-                </div>
-                <h2>{activeDoc.title}</h2>
-                <div className="article-body-text">
-                  {activeDoc.content.split('\n\n').map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
+                {covenants.map((item) => (
+                  <section 
+                    key={item.id} 
+                    id={`section-${item.id}`} 
+                    className="bylaws-section"
+                  >
+                    <div className="article-meta">
+                      <span className="badge badge-success">Official HOA Document</span>
+                      <span className="doc-cite">Book 1374, Page 342-377</span>
+                    </div>
+                    <h2>{item.title}</h2>
+                    <div className="article-body-text">
+                      {item.content.split('\n\n').map((paragraph, index) => (
+                        <p key={index}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
           </div>
@@ -383,6 +430,19 @@ c) 15 feet from all boundary lines that are not a front or rear boundary line an
           color: var(--text-primary);
           border-bottom: 1px solid var(--border-color);
           padding-bottom: 0.75rem;
+        }
+
+        .bylaws-section {
+          scroll-margin-top: 100px;
+          margin-bottom: 3.5rem;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 2.5rem;
+        }
+
+        .bylaws-section:last-of-type {
+          border-bottom: none;
+          margin-bottom: 1rem;
+          padding-bottom: 0;
         }
 
         .article-body-text p {
