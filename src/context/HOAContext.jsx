@@ -170,32 +170,6 @@ export const HOAProvider = ({ children }) => {
       console.warn("Residents subscription failed, loading local storage cache:", error);
     });
 
-    const unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
-      if (snapshot.empty) {
-        initialTickets.forEach(ticket => {
-          setDoc(doc(db, 'tickets', ticket.id), ticket).catch(e => {});
-        });
-      } else {
-        const loaded = snapshot.docs.map(doc => doc.data());
-        setTickets(loaded);
-      }
-    }, (error) => {
-      console.warn("Tickets subscription failed, loading local storage cache:", error);
-    });
-
-    const unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
-      if (snapshot.empty) {
-        initialBookings.forEach(booking => {
-          setDoc(doc(db, 'bookings', booking.id), booking).catch(e => {});
-        });
-      } else {
-        const loaded = snapshot.docs.map(doc => doc.data());
-        setBookings(loaded);
-      }
-    }, (error) => {
-      console.warn("Bookings subscription failed, loading local storage cache:", error);
-    });
-
     const unsubscribeAnnouncements = onSnapshot(collection(db, 'announcements'), (snapshot) => {
       if (snapshot.empty) {
         initialAnnouncements.forEach(ann => {
@@ -210,36 +184,70 @@ export const HOAProvider = ({ children }) => {
       console.warn("Announcements subscription failed, loading local storage cache:", error);
     });
 
-    const unsubscribeArcRequests = onSnapshot(collection(db, 'arcRequests'), (snapshot) => {
-      if (snapshot.empty) {
-        initialArcRequests.forEach(req => {
-          setDoc(doc(db, 'arcRequests', req.id), req).catch(e => {});
-        });
-      } else {
-        const loaded = snapshot.docs.map(doc => doc.data());
-        setArcRequests(loaded);
-      }
-    }, (error) => {
-      console.warn("ARC requests subscription failed, loading local storage cache:", error);
-    });
+    // Secured subscriptions - only initialize if user is authenticated
+    let unsubscribeTickets = () => {};
+    let unsubscribeBookings = () => {};
+    let unsubscribeArcRequests = () => {};
+    let unsubscribeLogs = () => {};
 
-    const unsubscribeLogs = onSnapshot(collection(db, 'deliveryLogs'), (snapshot) => {
-      if (snapshot.empty) {
-        const initialLogs = [
-          `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
-          `[DATABASE] Local database sync enabled.`
-        ];
-        initialLogs.forEach((logText, index) => {
-          setDoc(doc(db, 'deliveryLogs', `log-${index}-${Date.now()}`), { text: logText, timestamp: Date.now() + index }).catch(e => {});
-        });
-      } else {
-        const loaded = snapshot.docs.map(doc => doc.data());
-        loaded.sort((a, b) => b.timestamp - a.timestamp);
-        setDeliveryLogs(loaded.map(l => l.text));
-      }
-    }, (error) => {
-      console.warn("Logs subscription failed, loading local storage cache:", error);
-    });
+    if (currentUser) {
+      unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
+        if (snapshot.empty) {
+          initialTickets.forEach(ticket => {
+            setDoc(doc(db, 'tickets', ticket.id), ticket).catch(e => {});
+          });
+        } else {
+          const loaded = snapshot.docs.map(doc => doc.data());
+          setTickets(loaded);
+        }
+      }, (error) => {
+        console.warn("Tickets subscription failed, loading local storage cache:", error);
+      });
+
+      unsubscribeBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+        if (snapshot.empty) {
+          initialBookings.forEach(booking => {
+            setDoc(doc(db, 'bookings', booking.id), booking).catch(e => {});
+          });
+        } else {
+          const loaded = snapshot.docs.map(doc => doc.data());
+          setBookings(loaded);
+        }
+      }, (error) => {
+        console.warn("Bookings subscription failed, loading local storage cache:", error);
+      });
+
+      unsubscribeArcRequests = onSnapshot(collection(db, 'arcRequests'), (snapshot) => {
+        if (snapshot.empty) {
+          initialArcRequests.forEach(req => {
+            setDoc(doc(db, 'arcRequests', req.id), req).catch(e => {});
+          });
+        } else {
+          const loaded = snapshot.docs.map(doc => doc.data());
+          setArcRequests(loaded);
+        }
+      }, (error) => {
+        console.warn("ARC requests subscription failed, loading local storage cache:", error);
+      });
+
+      unsubscribeLogs = onSnapshot(collection(db, 'deliveryLogs'), (snapshot) => {
+        if (snapshot.empty) {
+          const initialLogs = [
+            `[SYSTEM] HOA System Online - 2026-06-28 08:24:14`,
+            `[DATABASE] Local database sync enabled.`
+          ];
+          initialLogs.forEach((logText, index) => {
+            setDoc(doc(db, 'deliveryLogs', `log-${index}-${Date.now()}`), { text: logText, timestamp: Date.now() + index }).catch(e => {});
+          });
+        } else {
+          const loaded = snapshot.docs.map(doc => doc.data());
+          loaded.sort((a, b) => b.timestamp - a.timestamp);
+          setDeliveryLogs(loaded.map(l => l.text));
+        }
+      }, (error) => {
+        console.warn("Logs subscription failed, loading local storage cache:", error);
+      });
+    }
 
     return () => {
       unsubscribeResidents();
@@ -249,7 +257,7 @@ export const HOAProvider = ({ children }) => {
       unsubscribeArcRequests();
       unsubscribeLogs();
     };
-  }, []);
+  }, [currentUser]);
 
   // Listen to Firebase Auth state changes
   useEffect(() => {
