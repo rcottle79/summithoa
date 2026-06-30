@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { HomeIcon, CheckIcon } from '../components/Icons';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function Auth() {
   const { login, signup, quickLogin } = useContext(HOAContext);
@@ -65,14 +66,20 @@ export default function Auth() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSignupData(prev => ({ ...prev, avatar: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setSignupData(prev => ({ ...prev, avatar: compressed }));
+      } catch (err) {
+        console.error("Image compression failed, using original file", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSignupData(prev => ({ ...prev, avatar: reader.result }));
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 

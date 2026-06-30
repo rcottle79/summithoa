@@ -2,6 +2,8 @@ import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { CheckIcon } from '../components/Icons';
 
+import { compressImage } from '../utils/imageCompressor';
+
 export default function Profile() {
   const { currentUser, updateProfile } = useContext(HOAContext);
   const [isEditing, setIsEditing] = useState(false);
@@ -24,22 +26,33 @@ export default function Profile() {
     setFormData(prev => ({ ...prev, avatar: url }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-        setFormData(prev => ({ ...prev, avatar: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setAvatarPreview(compressed);
+        setFormData(prev => ({ ...prev, avatar: compressed }));
+      } catch (err) {
+        console.error("Image compression failed, using original file", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAvatarPreview(reader.result);
+          setFormData(prev => ({ ...prev, avatar: reader.result }));
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    updateProfile(formData);
-    setIsEditing(false);
+    try {
+      await updateProfile(formData);
+      setIsEditing(false);
+    } catch (err) {
+      alert(err.message || "Failed to update profile");
+    }
   };
 
   return (

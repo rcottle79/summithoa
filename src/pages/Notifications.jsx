@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { NotificationIcon, CloseIcon } from '../components/Icons';
 import Modal from '../components/Modal';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function Notifications() {
   const { 
@@ -20,14 +21,20 @@ export default function Notifications() {
   const [eventTime, setEventTime] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setImagePreview(compressed);
+      } catch (err) {
+        console.error("Image compression failed, using original file", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
   
@@ -396,14 +403,20 @@ export default function Notifications() {
                   type="file" 
                   id="edit-announcement-image" 
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setEditImage(reader.result);
-                      };
-                      reader.readAsDataURL(file);
+                      try {
+                        const compressed = await compressImage(file);
+                        setEditImage(compressed);
+                      } catch (err) {
+                        console.error("Image compression failed, using original file", err);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setEditImage(reader.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     }
                   }}
                   className="visually-hidden"

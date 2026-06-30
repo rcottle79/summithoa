@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon, NotificationIcon } from '../components/Icons';
 import Modal from '../components/Modal';
+import { compressImage } from '../utils/imageCompressor';
 
 const defaultAvatars = [
   '/avatar-male.png',
@@ -759,14 +760,20 @@ export default function Admin() {
                   type="file" 
                   id="edit-announcement-image" 
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setEditAnnImage(reader.result);
-                      };
-                      reader.readAsDataURL(file);
+                      try {
+                        const compressed = await compressImage(file);
+                        setEditAnnImage(compressed);
+                      } catch (err) {
+                        console.error("Image compression failed, using original file", err);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setEditAnnImage(reader.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     }
                   }}
                   className="visually-hidden"
@@ -904,14 +911,20 @@ export default function Admin() {
                     type="file" 
                     id="edit-res-avatar-file" 
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setEditFormData(prev => ({ ...prev, avatar: reader.result }));
-                        };
-                        reader.readAsDataURL(file);
+                        try {
+                          const compressed = await compressImage(file);
+                          setEditFormData(prev => ({ ...prev, avatar: compressed }));
+                        } catch (err) {
+                          console.error("Image compression failed, using original file", err);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setEditFormData(prev => ({ ...prev, avatar: reader.result }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }
                     }}
                     className="visually-hidden"

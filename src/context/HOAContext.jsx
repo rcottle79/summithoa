@@ -524,18 +524,25 @@ export const HOAProvider = ({ children }) => {
 
   // Profile Operations
   const updateProfile = async (updatedProfile) => {
-    // Local state sync
-    setResidents(prev => prev.map(r => r.id === updatedProfile.id ? updatedProfile : r));
-    if (currentUser && currentUser.id === updatedProfile.id) {
-      setCurrentUser(updatedProfile);
-    }
-
     try {
       await setDoc(doc(db, 'residents', updatedProfile.id), updatedProfile);
+      // Local state sync only if write succeeds
+      setResidents(prev => prev.map(r => r.id === updatedProfile.id ? updatedProfile : r));
+      if (currentUser && currentUser.id === updatedProfile.id) {
+        setCurrentUser(updatedProfile);
+      }
+      await addLog(`[PROFILE] Updated user profile for ${updatedProfile.name}.`);
     } catch (err) {
-      console.warn("Profile update to Firestore failed. Saved locally.", err);
+      console.warn("Profile update to Firestore failed:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setResidents(prev => prev.map(r => r.id === updatedProfile.id ? updatedProfile : r));
+        if (currentUser && currentUser.id === updatedProfile.id) {
+          setCurrentUser(updatedProfile);
+        }
+      } else {
+        throw new Error(`Failed to update profile: ${err.message}`);
+      }
     }
-    await addLog(`[PROFILE] Updated user profile for ${updatedProfile.name}.`);
   };
 
   // Support Ticket Operations
