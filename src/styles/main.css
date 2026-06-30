@@ -7,6 +7,11 @@
   padding: 0;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
@@ -282,5 +287,33 @@ textarea.form-control {
   .grid-2 {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+}
+
+/* Mobile responsiveness overrides */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.6rem !important;
+  }
+  h2 {
+    font-size: 1.25rem !important;
+  }
+  .subtitle {
+    font-size: 0.85rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .glass-panel {
+    padding: 1.25rem 1rem !important;
+  }
+  .glass-card {
+    padding: 1rem !important;
+  }
+  .modal-overlay {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    padding: 1rem !important;
+  }
+  .modal-content {
+    margin: 2rem auto !important;
   }
 }

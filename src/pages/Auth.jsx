@@ -550,6 +550,19 @@ export default function Auth() {
           justify-content: center;
           color: white;
         }
+
+        @media (max-width: 480px) {
+          .auth-card-container {
+            padding: 1.5rem 1.25rem;
+          }
+          .auth-logo-area h1 {
+            font-size: 1.75rem;
+          }
+          .presets-horizontal {
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+        }
       `}</style>
     </div>
   );
