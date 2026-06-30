@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper to get resident profile data
+    function getResident(uid) {
+      return get(/databases/$(database)/documents/residents/$(uid)).data;
+    }
+    
+    // Helper to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/residents/$(request.auth.uid)) && 
+        getResident(request.auth.uid).role == 'Admin';
+    }
+
+    // Residents Directory rules
+    match /residents/{residentId} {
+      // Anyone can read resident details (needed for portal directory view)
+      allow read: if true;
+      
+      // Allow creation of a new resident document if they are authenticated
+      allow create: if request.auth != null;
+      
+      // Allow users to update their own profiles, or Admins to update any profile
+      allow update: if request.auth != null && (
+        request.auth.uid == residentId || 
+        isAdmin()
+      );
+      
+      // Only Admins can delete profiles
+      allow delete: if isAdmin();
+    }
+
+    // Support Tickets rules
+    match /tickets/{ticketId} {
+      allow read, create: if request.auth != null;
+      allow update: if request.auth != null && (
+        resource.data.author == getResident(request.auth.uid).name || 
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Clubhouse Bookings rules
+    match /bookings/{bookingId} {
+      allow read, create: if request.auth != null;
+      allow delete: if request.auth != null && (
+        resource.data.residentName == getResident(request.auth.uid).name || 
+        isAdmin()
+      );
+    }
+
+    // Announcements rules
+    match /announcements/{announcementId} {
+      // Anyone can view announcements
+      allow read: if true;
+      
+      // Admins and Board Members can write announcements
+      allow write: if request.auth != null && (
+        getResident(request.auth.uid).role == 'Admin' ||
+        getResident(request.auth.uid).role == 'Board Member'
+      );
+    }
+
+    // ARC Requests rules
+    match /arcRequests/{requestId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // Logs rules
+    match /deliveryLogs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Mail queue rules (used by EmailJS or Extensions)
+    match /mail/{mailId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
