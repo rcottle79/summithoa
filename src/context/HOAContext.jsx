@@ -480,7 +480,44 @@ export const HOAProvider = ({ children }) => {
       console.warn("Firebase Auth Signup failed:", err);
 
       if (err.code === 'auth/email-already-in-use') {
-        throw new Error("An account already exists with this email.");
+        try {
+          // Limbo state check: Does a profile document actually exist in Firestore?
+          const q = query(collection(db, 'residents'), where('email', '==', email));
+          const querySnapshot = await getDocs(q);
+          
+          if (querySnapshot.empty) {
+            // Limbo state detected! Auth account exists but resident profile document was deleted.
+            // Attempt to sign in in the background with the submitted credentials
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const firebaseUser = userCredential.user;
+            
+            const newResident = {
+              id: firebaseUser.uid,
+              name,
+              email,
+              phone,
+              address,
+              bio,
+              avatar,
+              role,
+              password,
+              approved: false
+            };
+
+            await setDoc(doc(db, 'residents', firebaseUser.uid), newResident);
+            await addLog(`[AUTH] Healed profile mismatch/limbo state for ${name} (Street Address: ${address}). Pending administrator approval.`);
+            await signOut(auth);
+            return newResident;
+          } else {
+            throw new Error("An account already exists with this email.");
+          }
+        } catch (healErr) {
+          if (healErr.message === "An account already exists with this email.") {
+            throw healErr;
+          }
+          console.error("Heal limbo state failed:", healErr);
+          throw new Error("An account already exists with this email address in Firebase Authentication. If you previously registered, please log in or contact the administrator.");
+        }
       }
       if (err.code === 'auth/weak-password') {
         throw new Error("Password must be at least 6 characters long.");
