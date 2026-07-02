@@ -51,11 +51,11 @@ export default function Auth() {
     setSignupError('');
     try {
       await signup(
-        signupData.name,
-        signupData.email,
-        signupData.phone,
-        signupData.address,
-        signupData.bio,
+        signupData.name.trim(),
+        signupData.email.trim(),
+        signupData.phone.trim(),
+        signupData.address.trim(),
+        signupData.bio ? signupData.bio.trim() : '',
         signupData.avatar,
         'Resident', // default role
         signupData.password

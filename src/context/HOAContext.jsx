@@ -366,18 +366,25 @@ export const HOAProvider = ({ children }) => {
     } catch (err) {
       console.warn("Firebase Auth signin failed. Attempting local memory fallback:", err);
 
-      // Local fallback password check
-      const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase());
-      if (foundUser) {
-        if (foundUser.approved === false) {
-          throw new Error("Your account is currently pending administrator approval.");
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Local fallback password check only on localhost
+      if (isLocalhost) {
+        const foundUser = residents.find(r => r.email.toLowerCase() === email.toLowerCase());
+        if (foundUser) {
+          if (foundUser.approved === false) {
+            throw new Error("Your account is currently pending administrator approval.");
+          }
+          if (foundUser.password === password) {
+            setCurrentUser(foundUser);
+            setIsAuthenticated(true);
+            addLog(`[AUTH] Resident ${foundUser.name} signed in locally (Fallback mode).`).catch(e => {});
+            return foundUser;
+          }
         }
-        if (foundUser.password === password) {
-          setCurrentUser(foundUser);
-          setIsAuthenticated(true);
-          addLog(`[AUTH] Resident ${foundUser.name} signed in locally (Fallback mode).`).catch(e => {});
-          return foundUser;
-        }
+      }
+
+      if (err.code === 'auth/network-request-failed' || (err.message && err.message.includes('network'))) {
+        throw new Error("Network connection to database failed. If you have an adblocker, VPN, or firewall active, please disable it and try again.");
       }
 
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
@@ -386,7 +393,7 @@ export const HOAProvider = ({ children }) => {
       if (err.code === 'auth/operation-not-allowed') {
         throw new Error("Email/Password logins are not enabled. Please enable the Email/Password provider under Authentication > Sign-in method in your Firebase Console.");
       }
-      throw new Error(err.message || "An authentication error occurred.");
+      throw new Error(err.message || String(err) || "An authentication error occurred.");
     }
   };
 
@@ -466,9 +473,8 @@ export const HOAProvider = ({ children }) => {
       };
 
       await setDoc(doc(db, 'residents', firebaseUser.uid), newResident);
-      await signOut(auth); // Sign out because of approval gate
-
       await addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) in Firebase Auth. Pending administrator approval.`);
+      await signOut(auth); // Sign out after logging and logging in Firebase
       return newResident;
     } catch (err) {
       console.warn("Firebase Auth Signup failed:", err);
@@ -486,10 +492,13 @@ export const HOAProvider = ({ children }) => {
         throw new Error("Email/Password registration is not enabled. Please enable the Email/Password provider under Authentication > Sign-in method in your Firebase Console.");
       }
 
-      // Local fallback signup only if it is a connection/network issue
-      if (err.code === 'auth/network-request-failed' || 
+      // Local fallback signup only if it is a connection/network issue on localhost
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalhost && (
+          err.code === 'auth/network-request-failed' || 
           (err.message && err.message.includes('network')) || 
-          (err.message && err.message.includes('configuration'))) {
+          (err.message && err.message.includes('configuration'))
+      )) {
         
         const emailExists = residents.some(r => r && r.email && typeof r.email === 'string' && email && r.email.toLowerCase() === email.toLowerCase());
         if (emailExists) {
@@ -513,6 +522,10 @@ export const HOAProvider = ({ children }) => {
         setResidents(prev => [...prev, newResident]);
         addLog(`[AUTH] Created new account for ${name} (Street Address: ${address}) locally. Pending approval.`).catch(e => {});
         return newResident;
+      }
+
+      if (err.code === 'auth/network-request-failed' || (err.message && err.message.includes('network'))) {
+        throw new Error("Network connection to database failed. If you have an adblocker, VPN, or firewall active, please disable it and try again.");
       }
 
       throw new Error(err.message || String(err) || "An account creation error occurred.");
