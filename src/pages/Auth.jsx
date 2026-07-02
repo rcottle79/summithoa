@@ -46,18 +46,18 @@ export default function Auth() {
     setSignupData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSignupSubmit = (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setSignupError('');
     try {
-      signup(
+      await signup(
         signupData.name,
         signupData.email,
         signupData.phone,
         signupData.address,
         signupData.bio,
         signupData.avatar,
-        signupData.role,
+        'Resident', // default role
         signupData.password
       );
       setRegistrationPending(true);
