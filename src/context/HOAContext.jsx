@@ -442,6 +442,12 @@ export const HOAProvider = ({ children }) => {
   };
 
   const signup = async (name, email, phone, address, bio, avatar, role, password) => {
+    // Pre-emptively check if email is already in use in our residents database
+    const emailExists = residents.some(r => r.email && r.email.toLowerCase() === email.toLowerCase());
+    if (emailExists) {
+      throw new Error("An account already exists with this email.");
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
