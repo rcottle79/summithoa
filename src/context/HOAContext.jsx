@@ -487,8 +487,11 @@ export const HOAProvider = ({ children }) => {
       }
 
       // Local fallback signup only if it is a connection/network issue
-      if (err.code === 'auth/network-request-failed' || err.message.includes('network') || err.message.includes('configuration')) {
-        const emailExists = residents.some(r => r.email.toLowerCase() === email.toLowerCase());
+      if (err.code === 'auth/network-request-failed' || 
+          (err.message && err.message.includes('network')) || 
+          (err.message && err.message.includes('configuration'))) {
+        
+        const emailExists = residents.some(r => r && r.email && typeof r.email === 'string' && email && r.email.toLowerCase() === email.toLowerCase());
         if (emailExists) {
           throw new Error("An account already exists with this email.");
         }
@@ -512,7 +515,7 @@ export const HOAProvider = ({ children }) => {
         return newResident;
       }
 
-      throw new Error(err.message || "An account creation error occurred.");
+      throw new Error(err.message || String(err) || "An account creation error occurred.");
     }
   };
 

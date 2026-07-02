@@ -62,7 +62,8 @@ export default function Auth() {
       );
       setRegistrationPending(true);
     } catch (err) {
-      setSignupError(err.message);
+      console.error("Signup error in Auth.jsx:", err);
+      setSignupError(err.message || String(err) || "An account creation error occurred.");
     }
   };
 
