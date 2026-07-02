@@ -271,7 +271,7 @@ export const HOAProvider = ({ children }) => {
               setCurrentUser(userData);
               setIsAuthenticated(true);
             } else {
-              await signOut(auth);
+              // Clear local state without calling signOut to prevent race condition hangs
               setCurrentUser(null);
               setIsAuthenticated(false);
             }
