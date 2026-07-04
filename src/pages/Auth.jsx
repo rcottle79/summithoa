@@ -4,13 +4,18 @@ import { HomeIcon, CheckIcon } from '../components/Icons';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function Auth() {
-  const { login, signup, quickLogin } = useContext(HOAContext);
-  const [activeMode, setActiveMode] = useState('login'); // 'login' or 'signup'
+  const { login, signup, quickLogin, resetPasswordEmail } = useContext(HOAContext);
+  const [activeMode, setActiveMode] = useState('login'); // 'login', 'signup', or 'forgot_password'
   
   // Login fields
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Password reset fields
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   // Signup fields
   const [signupData, setSignupData] = useState({
@@ -38,6 +43,17 @@ export default function Auth() {
       login(loginEmail, loginPassword);
     } catch (err) {
       setLoginError(err.message);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    try {
+      await resetPasswordEmail(resetEmail.trim());
+      setResetSuccess(true);
+    } catch (err) {
+      setResetError(err.message || String(err) || "Failed to send reset link.");
     }
   };
 
@@ -119,6 +135,72 @@ export default function Auth() {
               Back to Login Screen
             </button>
           </div>
+        ) : activeMode === 'forgot_password' ? (
+          /* Forgot Password Screen */
+          <div className="auth-form-content animate-fade-in">
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)', textAlign: 'center' }}>Reset Password</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.5rem', textAlign: 'center' }}>
+              Enter your email address below, and we will send you a secure link to reset your account password.
+            </p>
+
+            {resetSuccess ? (
+              <div className="text-center" style={{ padding: '1rem 0' }}>
+                <div style={{ margin: '0 auto 1.5rem', width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+                  <CheckIcon size={24} />
+                </div>
+                <p style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 600, marginBottom: '1.5rem' }}>
+                  Reset Link Dispatched!
+                </p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                  A link has been sent to <strong>{resetEmail}</strong>. Please check your inbox and spam folders.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn btn-primary w-100" 
+                  onClick={() => {
+                    setResetSuccess(false);
+                    setResetEmail('');
+                    setActiveMode('login');
+                  }}
+                >
+                  Back to Login
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetSubmit}>
+                {resetError && <div className="error-toast">{resetError}</div>}
+                
+                <div className="form-group">
+                  <label htmlFor="reset-email">Email Address</label>
+                  <input
+                    type="email"
+                    id="reset-email"
+                    className="form-control"
+                    placeholder="resident@domain.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-primary auth-submit-btn" style={{ minHeight: '42px' }}>
+                  Send Reset Link
+                </button>
+
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', marginTop: '0.75rem', minHeight: '42px' }}
+                  onClick={() => {
+                    setResetError('');
+                    setActiveMode('login');
+                  }}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
         ) : (
           <>
             <div className="auth-tabs">
@@ -161,8 +243,22 @@ export default function Auth() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="login-password">Password</label>
+               <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label htmlFor="login-password">Password</label>
+                  <button 
+                    type="button" 
+                    className="text-btn" 
+                    style={{ fontSize: '0.8rem', padding: '0', minHeight: 'auto', textDecoration: 'underline', color: 'var(--accent-primary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    onClick={() => {
+                      setActiveMode('forgot_password');
+                      setSignupError('');
+                      setLoginError('');
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <input
                   type="password"
                   id="login-password"

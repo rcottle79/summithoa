@@ -5,10 +5,16 @@ import { CheckIcon } from '../components/Icons';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function Profile() {
-  const { currentUser, updateProfile } = useContext(HOAContext);
+  const { currentUser, updateProfile, changePassword } = useContext(HOAContext);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...currentUser });
   const [avatarPreview, setAvatarPreview] = useState(currentUser.avatar);
+
+  // Change password fields
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   // Hardcoded premium avatar illustrations to choose from
   const defaultAvatars = [
@@ -52,6 +58,26 @@ export default function Profile() {
       setIsEditing(false);
     } catch (err) {
       alert(err.message || "Failed to update profile");
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    try {
+      await changePassword(newPassword);
+      setPasswordSuccess("Password updated successfully!");
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordError(err.message || "Failed to update password.");
     }
   };
 
@@ -234,6 +260,49 @@ export default function Profile() {
                 <button type="submit" className="btn btn-primary">Save Changes</button>
                 <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
               </div>
+            </form>
+          </div>
+        )}
+        
+        {!isEditing && (
+          <div className="profile-edit-section glass-panel animate-fade-in">
+            <h2>Security Settings</h2>
+            <p className="subtitle" style={{ marginBottom: '1.5rem' }}>Update your portal account password below.</p>
+            
+            <form onSubmit={handlePasswordChange} className="profile-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {passwordError && <div className="error-toast" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem 1rem', borderRadius: 'var(--border-radius-sm)', fontSize: '0.85rem', textAlign: 'center' }}>{passwordError}</div>}
+              {passwordSuccess && <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.75rem 1rem', borderRadius: 'var(--border-radius-sm)', fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }}>{passwordSuccess}</div>}
+
+              <div className="form-group">
+                <label htmlFor="new-password">New Password <span className="required">*</span></label>
+                <input
+                  type="password"
+                  id="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="form-control"
+                  placeholder="At least 6 characters"
+                  required
+                  minLength="6"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirm-password">Confirm New Password <span className="required">*</span></label>
+                <input
+                  type="password"
+                  id="confirm-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="form-control"
+                  placeholder="Match new password"
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', minHeight: '40px' }}>
+                Update Account Password
+              </button>
             </form>
           </div>
         )}

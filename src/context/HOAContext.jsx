@@ -5,7 +5,9 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updatePassword
 } from 'firebase/auth';
 import { 
   collection, 
@@ -581,6 +583,50 @@ export const HOAProvider = ({ children }) => {
     await addLog(`[AUTH] User ${name} logged out.`);
   };
 
+  const resetPasswordEmail = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      await addLog(`[AUTH] Dispatched password reset link to ${email}.`);
+    } catch (err) {
+      console.warn("Password reset dispatch failed:", err);
+      if (err.code === 'auth/user-not-found') {
+        throw new Error("No account exists with this email address.");
+      }
+      if (err.code === 'auth/invalid-email') {
+        throw new Error("Please enter a valid email address.");
+      }
+      throw new Error(err.message || String(err) || "Failed to dispatch password reset link.");
+    }
+  };
+
+  const changePassword = async (newPassword) => {
+    try {
+      if (!auth.currentUser) {
+        throw new Error("You must be logged in to change your password.");
+      }
+      await updatePassword(auth.currentUser, newPassword);
+
+      // Also update the password field in the Firestore residents document for fallback/local compliance
+      const userRef = doc(db, 'residents', auth.currentUser.uid);
+      await updateDoc(userRef, { password: newPassword });
+
+      // Update local state and cache
+      setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
+      setResidents(prev => prev.map(r => r.id === auth.currentUser.uid ? { ...r, password: newPassword } : r));
+
+      await addLog(`[AUTH] Updated account password securely.`);
+    } catch (err) {
+      console.warn("Password change failed:", err);
+      if (err.code === 'auth/requires-recent-login') {
+        throw new Error("For security reasons, changing your password requires recent authentication. Please sign out and sign back in, then try again.");
+      }
+      if (err.code === 'auth/weak-password') {
+        throw new Error("Password must be at least 6 characters long.");
+      }
+      throw new Error(err.message || String(err) || "Failed to update password.");
+    }
+  };
+
   // Profile Operations
   const updateProfile = async (updatedProfile) => {
     try {
@@ -990,6 +1036,8 @@ This is an automated notification email sent from SummitHOA Portal.
         quickLogin,
         signup,
         logout,
+        resetPasswordEmail,
+        changePassword,
         updateProfile,
         addTicket,
         updateTicketStatus,
