@@ -188,38 +188,6 @@ export default function Profile() {
                     autocomplete="tel"
                     placeholder="(555) 000-0000"
                   />
-              </div>
-
-              {/* Change Password Fields (Optional) */}
-              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Change Password</h3>
-                <p className="subtitle" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem', marginTop: '0' }}>
-                  Leave these fields blank if you do not want to change your password.
-                </p>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label htmlFor="new-password">New Password</label>
-                    <input
-                      type="password"
-                      id="new-password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="form-control"
-                      placeholder="At least 6 characters"
-                      minLength="6"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="confirm-password">Confirm New Password</label>
-                    <input
-                      type="password"
-                      id="confirm-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="form-control"
-                      placeholder="Match new password"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -283,6 +251,38 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+
+              {/* Change Password Fields (Optional) */}
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Change Password</h3>
+                <p className="subtitle" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem', marginTop: '0' }}>
+                  Leave these fields blank if you do not want to change your password.
+                </p>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="new-password">New Password</label>
+                    <input
+                      type="password"
+                      id="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="form-control"
+                      placeholder="At least 6 characters"
+                      minLength="6"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="confirm-password">Confirm New Password</label>
+                    <input
+                      type="password"
+                      id="confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="form-control"
+                      placeholder="Match new password"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="form-actions">
