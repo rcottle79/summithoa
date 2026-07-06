@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { HOAContext } from '../context/HOAContext';
-import { HomeIcon, CheckIcon } from '../components/Icons';
+import { HomeIcon, CheckIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function Auth() {
@@ -11,6 +11,7 @@ export default function Auth() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Password reset fields
   const [resetEmail, setResetEmail] = useState('');
@@ -30,6 +31,7 @@ export default function Auth() {
   });
   const [signupError, setSignupError] = useState('');
   const [registrationPending, setRegistrationPending] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   const defaultAvatars = [
     '/avatar-male.png',
@@ -259,15 +261,41 @@ export default function Auth() {
                     Forgot Password?
                   </button>
                 </div>
-                <input
-                  type="password"
-                  id="login-password"
-                  className="form-control"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showLoginPassword ? "text" : "password"}
+                    id="login-password"
+                    className="form-control"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    style={{ paddingRight: '2.5rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(prev => !prev)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-secondary)',
+                      padding: '0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: 'auto',
+                      width: '32px',
+                      height: '32px'
+                    }}
+                  >
+                    {showLoginPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" className="btn btn-primary auth-submit-btn">
@@ -384,17 +412,43 @@ export default function Auth() {
 
                 <div className="form-group">
                   <label htmlFor="signup-password">Account Password <span className="required">*</span></label>
-                  <input
-                    type="password"
-                    id="signup-password"
-                    name="password"
-                    className="form-control"
-                    placeholder="••••••••"
-                    value={signupData.password}
-                    onChange={handleSignupInputChange}
-                    required
-                    minLength="6"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showSignupPassword ? "text" : "password"}
+                      id="signup-password"
+                      name="password"
+                      className="form-control"
+                      placeholder="••••••••"
+                      value={signupData.password}
+                      onChange={handleSignupInputChange}
+                      required
+                      minLength="6"
+                      style={{ paddingRight: '2.5rem' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword(prev => !prev)}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-secondary)',
+                        padding: '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 'auto',
+                        width: '32px',
+                        height: '32px'
+                      }}
+                    >
+                      {showSignupPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

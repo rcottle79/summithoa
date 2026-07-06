@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
-import { CheckIcon } from '../components/Icons';
+import { CheckIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 
 import { compressImage } from '../utils/imageCompressor';
 
@@ -14,6 +14,8 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Hardcoded premium avatar illustrations to choose from
   const defaultAvatars = [
@@ -261,26 +263,78 @@ export default function Profile() {
                 <div className="form-grid">
                   <div className="form-group">
                     <label htmlFor="new-password">New Password</label>
-                    <input
-                      type="password"
-                      id="new-password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="form-control"
-                      placeholder="At least 6 characters"
-                      minLength="6"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        id="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="form-control"
+                        placeholder="At least 6 characters"
+                        minLength="6"
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(prev => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)',
+                          padding: '0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: 'auto',
+                          width: '32px',
+                          height: '32px'
+                        }}
+                      >
+                        {showNewPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label htmlFor="confirm-password">Confirm New Password</label>
-                    <input
-                      type="password"
-                      id="confirm-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="form-control"
-                      placeholder="Match new password"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirm-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="form-control"
+                        placeholder="Match new password"
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(prev => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)',
+                          padding: '0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: 'auto',
+                          width: '32px',
+                          height: '32px'
+                        }}
+                      >
+                        {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
