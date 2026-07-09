@@ -56,7 +56,7 @@ export default function Directory() {
               className={`filter-btn ${roleFilter === filter ? 'active' : ''}`}
               onClick={() => setRoleFilter(filter)}
             >
-              {filter === 'Board' ? 'Board Members' : filter === 'Admin' ? 'Administrators' : `${filter}s`}
+              {filter === 'All' ? 'All' : filter === 'Board' ? 'Board Members' : filter === 'Admin' ? 'Administrators' : 'Residents'}
             </button>
           ))}
         </div>
