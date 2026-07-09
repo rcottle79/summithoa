@@ -69,11 +69,13 @@ service cloud.firestore {
 
     // Announcements rules
     match /announcements/{announcementId} {
-      // Anyone can view announcements
       allow read: if true;
-      
-      // Admins and Board Members can write announcements
-      allow write: if hasRole('Admin') || hasRole('Board Member');
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        hasRole('Admin') || 
+        hasRole('Board Member') || 
+        (resource.data.authorId == request.auth.uid)
+      );
     }
 
     // ARC Requests rules
