@@ -252,7 +252,7 @@ export default function Profile() {
                       onChange={handleFileChange}
                       className="visually-hidden"
                     />
-                    <label htmlFor="custom-avatar-file" className="btn btn-secondary upload-btn">
+                    <label htmlFor="custom-avatar-file" className="filter-btn" style={{ cursor: 'pointer' }}>
                       Choose File
                     </label>
                   </div>
@@ -360,6 +360,27 @@ export default function Profile() {
       </div>
 
       <style>{`
+        .filter-btn {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          padding: 0.5rem 1rem;
+          border-radius: var(--border-radius-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: var(--transition-fast);
+          font-size: 0.875rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .filter-btn:hover {
+          color: var(--text-primary);
+          border-color: var(--border-color-hover);
+          background: rgba(255, 255, 255, 0.05);
+        }
+
         .profile-layout {
           display: grid;
           grid-template-columns: 0.8fr 1.2fr;
