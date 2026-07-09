@@ -317,7 +317,7 @@ export default function Notifications() {
                     onChange={handleImageUpload}
                     className="visually-hidden"
                   />
-                  <label htmlFor="announcement-image" className="btn btn-secondary" style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  <label htmlFor="announcement-image" className="filter-btn" style={{ cursor: 'pointer' }}>
                     {imagePreview ? 'Change Image' : 'Upload Flyer / Image'}
                   </label>
                   {imagePreview && (
@@ -474,7 +474,7 @@ export default function Notifications() {
                   }}
                   className="visually-hidden"
                 />
-                <label htmlFor="edit-announcement-image" className="btn btn-secondary" style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                <label htmlFor="edit-announcement-image" className="filter-btn" style={{ cursor: 'pointer' }}>
                   {editImage ? 'Change Image' : 'Upload Flyer / Image'}
                 </label>
                 {editImage && (
@@ -510,6 +510,27 @@ export default function Notifications() {
       )}
 
       <style>{`
+        .filter-btn {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          padding: 0.5rem 1rem;
+          border-radius: var(--border-radius-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: var(--transition-fast);
+          font-size: 0.875rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .filter-btn:hover {
+          color: var(--text-primary);
+          border-color: var(--border-color-hover);
+          background: rgba(255, 255, 255, 0.05);
+        }
+
         .notifications-layout {
           display: grid;
           grid-template-columns: 1fr 1fr;
