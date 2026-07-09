@@ -31,7 +31,7 @@ export default function Dashboard({ setActiveTab }) {
           >
             <DollarIcon size={18} /> Pay Dues
           </a>
-          <button className="btn btn-secondary" onClick={() => setActiveTab('booking')}>
+          <button className="btn btn-primary" onClick={() => setActiveTab('booking')}>
             <BookingIcon size={18} /> Book Clubhouse
           </button>
         </div>
