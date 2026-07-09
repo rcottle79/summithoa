@@ -82,15 +82,15 @@ export default function ArcRequests() {
       </div>
 
       {currentUser.role === 'Admin' && (
-        <div className="arc-tabs">
+        <div className="filter-group" style={{ marginBottom: '2rem' }}>
           <button 
-            className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+            className={`filter-btn ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
             All Pending Board Reviews ({arcRequests.filter(r => r.status === 'Pending').length})
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`}
+            className={`filter-btn ${activeTab === 'my' ? 'active' : ''}`}
             onClick={() => setActiveTab('my')}
           >
             My Private Submissions
@@ -389,12 +389,34 @@ export default function ArcRequests() {
           margin-bottom: 2rem;
         }
 
-        .arc-tabs {
+        .filter-group {
           display: flex;
-          gap: 1rem;
-          margin-bottom: 2rem;
-          border-bottom: 1px solid var(--border-color);
-          padding-bottom: 0.5rem;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .filter-btn {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          padding: 0.5rem 1rem;
+          border-radius: var(--border-radius-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: var(--transition-fast);
+          font-size: 0.875rem;
+        }
+
+        .filter-btn:hover {
+          color: var(--text-primary);
+          border-color: var(--border-color-hover);
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .filter-btn.active {
+          background: var(--accent-primary);
+          color: var(--text-inverse);
+          border-color: var(--accent-primary);
         }
 
         .arc-layout {

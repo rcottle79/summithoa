@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Directory from './pages/Directory';
+import Contractors from './pages/Contractors';
 import Tickets from './pages/Tickets';
 import Booking from './pages/Booking';
 import Notifications from './pages/Notifications';
@@ -25,6 +26,8 @@ function MainAppLayout() {
         return <Profile />;
       case 'directory':
         return <Directory />;
+      case 'contractors':
+        return <Contractors />;
       case 'tickets':
         return <Tickets />;
       case 'booking':

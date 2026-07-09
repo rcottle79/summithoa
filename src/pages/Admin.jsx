@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
-import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon, NotificationIcon } from '../components/Icons';
+import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon, NotificationIcon, BriefcaseIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 import { compressImage } from '../utils/imageCompressor';
 
@@ -26,7 +26,10 @@ export default function Admin() {
     updateArcRequestStatus,
     announcements,
     deleteAnnouncement,
-    updateAnnouncement
+    updateAnnouncement,
+    contractors,
+    editContractor,
+    deleteContractor
   } = useContext(HOAContext);
 
   const [activeSubTab, setActiveSubTab] = useState('tickets'); // 'tickets' or 'residents'
@@ -55,6 +58,57 @@ export default function Admin() {
     avatar: '',
     role: ''
   });
+
+  // Contractor Search & Edit State
+  const [contractorSearch, setContractorSearch] = useState('');
+  const [editingContractor, setEditingContractor] = useState(null);
+  const [editContractorData, setEditContractorData] = useState({
+    companyName: '',
+    email: '',
+    phone: '',
+    category: 'Concrete',
+    address: '',
+    website: '',
+    pocFirstName: '',
+    pocLastName: ''
+  });
+
+  const handleEditContractorClick = (c) => {
+    setEditingContractor(c);
+    setEditContractorData({
+      companyName: c.companyName || '',
+      email: c.email || '',
+      phone: c.phone || '',
+      category: c.category || 'Concrete',
+      address: c.address || '',
+      website: c.website || '',
+      pocFirstName: c.pocFirstName || '',
+      pocLastName: c.pocLastName || ''
+    });
+  };
+
+  const handleEditContractorSubmit = async (e) => {
+    e.preventDefault();
+    if (!editContractorData.companyName.trim() || !editContractorData.email.trim() || !editContractorData.phone.trim()) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+    try {
+      await editContractor(editingContractor.id, {
+        companyName: editContractorData.companyName.trim(),
+        email: editContractorData.email.trim(),
+        phone: editContractorData.phone.trim(),
+        category: editContractorData.category,
+        address: editContractorData.address.trim(),
+        website: editContractorData.website.trim(),
+        pocFirstName: editContractorData.pocFirstName.trim(),
+        pocLastName: editContractorData.pocLastName.trim()
+      });
+      setEditingContractor(null);
+    } catch (err) {
+      alert(err.message || "Failed to update contractor");
+    }
+  };
 
   // Edit Announcement State
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
@@ -240,6 +294,12 @@ export default function Admin() {
           onClick={() => setActiveSubTab('announcements')}
         >
           <NotificationIcon size={16} /> Manage Announcements
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeSubTab === 'contractors' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('contractors')}
+        >
+          <BriefcaseIcon size={16} /> Manage Contractors
         </button>
       </div>
 
@@ -662,6 +722,122 @@ export default function Admin() {
                 {announcements.length === 0 && (
                   <tr>
                     <td colSpan="6" className="empty-table-td">No announcements have been published.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: Manage Contractors */}
+      {activeSubTab === 'contractors' && (
+        <div className="admin-announcements-section glass-panel animate-fade-in">
+          <div className="section-title-bar">
+            <h2>Recommended Contractors Directory</h2>
+            <p className="section-desc">Manage resident-recommended contractor profiles and details.</p>
+          </div>
+
+          <div className="admin-filters-bar">
+            <div className="search-bar-wrapper">
+              <SearchIcon className="search-icon" size={16} />
+              <input
+                type="text"
+                className="form-control filter-search"
+                placeholder="Search contractor by company or POC..."
+                value={contractorSearch}
+                onChange={(e) => setContractorSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="table-responsive-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Company Name</th>
+                  <th>Category</th>
+                  <th>Contact Info</th>
+                  <th>Primary POC</th>
+                  <th>Details</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contractors
+                  .filter(c => {
+                    const company = c.companyName || '';
+                    const first = c.pocFirstName || '';
+                    const last = c.pocLastName || '';
+                    const email = c.email || '';
+                    const phone = c.phone || '';
+                    const category = c.category || '';
+                    
+                    return company.toLowerCase().includes(contractorSearch.toLowerCase()) ||
+                           first.toLowerCase().includes(contractorSearch.toLowerCase()) ||
+                           last.toLowerCase().includes(contractorSearch.toLowerCase()) ||
+                           email.toLowerCase().includes(contractorSearch.toLowerCase()) ||
+                           phone.toLowerCase().includes(contractorSearch.toLowerCase()) ||
+                           category.toLowerCase().includes(contractorSearch.toLowerCase());
+                  })
+                  .map(c => (
+                    <tr key={c.id} className="admin-tr">
+                      <td>
+                        <strong>{c.companyName}</strong>
+                      </td>
+                      <td>
+                        <span className="badge badge-info" style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                          {c.category}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.85rem' }}>📧 {c.email}</div>
+                        <div style={{ fontSize: '0.85rem' }}>📞 {c.phone}</div>
+                      </td>
+                      <td>
+                        {c.pocFirstName || c.pocLastName ? `${c.pocFirstName || ''} ${c.pocLastName || ''}` : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>None</span>}
+                      </td>
+                      <td>
+                        {c.address && <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>📍 {c.address}</div>}
+                        {c.website && (
+                          <div style={{ fontSize: '0.8rem' }}>
+                            🔗 <a href={c.website} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}>
+                              Website
+                            </a>
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button 
+                            className="btn btn-secondary"
+                            style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                            onClick={() => handleEditContractorClick(c)}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="btn btn-danger"
+                            style={{ minHeight: '32px', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to delete "${c.companyName}"?`)) {
+                                try {
+                                  await deleteContractor(c.id);
+                                } catch (err) {
+                                  alert(err.message || "Failed to delete contractor");
+                                }
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                {contractors.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="empty-table-td">No contractors recommended yet.</td>
                   </tr>
                 )}
               </tbody>
@@ -1157,6 +1333,123 @@ export default function Admin() {
               </div>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* Contractor Edit Modal */}
+      {editingContractor && (
+        <Modal
+          isOpen={!!editingContractor}
+          onClose={() => setEditingContractor(null)}
+          title="Edit Contractor Profile"
+        >
+          <form onSubmit={handleEditContractorSubmit} className="ticket-form">
+            <div className="form-group">
+              <label htmlFor="edit-companyName">Company Name <span className="required">*</span></label>
+              <input
+                type="text"
+                id="edit-companyName"
+                value={editContractorData.companyName}
+                onChange={(e) => setEditContractorData(prev => ({ ...prev, companyName: e.target.value }))}
+                className="form-control"
+                required
+              />
+            </div>
+
+            <div className="grid-2">
+              <div className="form-group">
+                <label htmlFor="edit-category">Category <span className="required">*</span></label>
+                <select
+                  id="edit-category"
+                  value={editContractorData.category}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, category: e.target.value }))}
+                  className="form-control"
+                  required
+                >
+                  {['Concrete', 'Electrician', 'General Contractor', 'Painter', 'Plumber', 'Roofer'].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-phone">Phone Number <span className="required">*</span></label>
+                <input
+                  type="tel"
+                  id="edit-phone"
+                  value={editContractorData.phone}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
+                  className="form-control"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-email">Email Address <span className="required">*</span></label>
+              <input
+                type="email"
+                id="edit-email"
+                value={editContractorData.email}
+                onChange={(e) => setEditContractorData(prev => ({ ...prev, email: e.target.value }))}
+                className="form-control"
+                required
+              />
+            </div>
+
+            <div className="grid-2">
+              <div className="form-group">
+                <label htmlFor="edit-pocFirstName">POC First Name</label>
+                <input
+                  type="text"
+                  id="edit-pocFirstName"
+                  value={editContractorData.pocFirstName}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, pocFirstName: e.target.value }))}
+                  className="form-control"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-pocLastName">POC Last Name</label>
+                <input
+                  type="text"
+                  id="edit-pocLastName"
+                  value={editContractorData.pocLastName}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, pocLastName: e.target.value }))}
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-address">Address</label>
+              <input
+                type="text"
+                id="edit-address"
+                value={editContractorData.address}
+                onChange={(e) => setEditContractorData(prev => ({ ...prev, address: e.target.value }))}
+                className="form-control"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="edit-website">Website URL</label>
+              <input
+                type="url"
+                id="edit-website"
+                value={editContractorData.website}
+                onChange={(e) => setEditContractorData(prev => ({ ...prev, website: e.target.value }))}
+                className="form-control"
+              />
+            </div>
+
+            <div className="admin-modal-action-buttons" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Changes</button>
+              <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setEditingContractor(null)}>Cancel</button>
+            </div>
+          </form>
         </Modal>
       )}
 

@@ -41,6 +41,53 @@ const initialResidents = [
   { id: 'res-5', name: 'Marcus Vance', address: '2D', role: 'Board Member', email: 'mvance@hoa.community', phone: '(555) 011-4752', bio: 'HOA Treasurer. Retired accountant. Always happy to discuss community finance.', avatar: '/avatar-male.png', password: 'password123', approved: true }
 ];
 
+const initialContractors = [
+  {
+    id: 'c-1',
+    companyName: 'Apex Electrical Services',
+    email: 'contact@apexelectrical.com',
+    phone: '5552345678',
+    category: 'Electrician',
+    address: '404 Voltage Way',
+    website: 'https://apexelectrical.com',
+    pocFirstName: 'Alan',
+    pocLastName: 'Spark',
+    ratings: {
+      'res-1': 5,
+      'res-2': 4
+    }
+  },
+  {
+    id: 'c-2',
+    companyName: 'FlowRite Plumbing',
+    email: 'service@flowriteplumbing.net',
+    phone: '5553456789',
+    category: 'Plumber',
+    address: '808 Copper Pipe Rd',
+    website: 'https://flowriteplumbing.net',
+    pocFirstName: 'Gary',
+    pocLastName: 'Drain',
+    ratings: {
+      'res-1': 4,
+      'res-2': 4
+    }
+  },
+  {
+    id: 'c-3',
+    companyName: 'Overhead Roofing Experts',
+    email: 'info@overheadroofs.com',
+    phone: '5554567890',
+    category: 'Roofer',
+    address: '101 Shingle Blvd',
+    website: 'https://overheadroofs.com',
+    pocFirstName: 'Sarah',
+    pocLastName: 'Roof',
+    ratings: {
+      'res-3': 5
+    }
+  }
+];
+
 const initialTickets = [
   { id: 't-1', title: 'Main Gate Gatehouse Light Flickering', description: 'The light on the left side of the entrance gatehouse has been flickering constantly. It makes it hard to see code panels at night.', category: 'Electrical', location: 'Main Entrance Gatehouse', urgency: 'Medium', status: 'Open', author: 'Sarah Jenkins', date: '2026-06-25', comments: [] },
   { id: 't-2', title: 'Sprinkler Broken in Courtyard B', description: 'A sprinkler head is completely broken and spraying a geyser of water onto the sidewalk during the watering cycles.', category: 'Landscaping', location: 'Courtyard B near Unit 2B', urgency: 'High', status: 'In Progress', author: 'John Smith', date: '2026-06-24', comments: [{ author: 'Michael Chang', text: 'Landscaping team has been notified. They will be on-site Friday morning to repair it.', date: '2026-06-25' }] },
@@ -124,6 +171,11 @@ export const HOAProvider = ({ children }) => {
     ];
   });
 
+  const [contractors, setContractors] = useState(() => {
+    const saved = localStorage.getItem('hoa_contractors');
+    return saved ? JSON.parse(saved) : initialContractors;
+  });
+
   // Sync state mutations to LocalStorage for persistence in fallback/local mode
   useEffect(() => {
     localStorage.setItem('hoa_isAuthenticated', JSON.stringify(isAuthenticated));
@@ -156,6 +208,10 @@ export const HOAProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('hoa_arc_requests', JSON.stringify(arcRequests));
   }, [arcRequests]);
+
+  useEffect(() => {
+    localStorage.setItem('hoa_contractors', JSON.stringify(contractors));
+  }, [contractors]);
 
   // Subscribe to real-time updates and seed if empty
   useEffect(() => {
@@ -191,6 +247,7 @@ export const HOAProvider = ({ children }) => {
     let unsubscribeBookings = () => {};
     let unsubscribeArcRequests = () => {};
     let unsubscribeLogs = () => {};
+    let unsubscribeContractors = () => {};
 
     if (currentUser) {
       unsubscribeTickets = onSnapshot(collection(db, 'tickets'), (snapshot) => {
@@ -249,6 +306,19 @@ export const HOAProvider = ({ children }) => {
       }, (error) => {
         console.warn("Logs subscription failed, loading local storage cache:", error);
       });
+
+      unsubscribeContractors = onSnapshot(collection(db, 'contractors'), (snapshot) => {
+        if (snapshot.empty) {
+          initialContractors.forEach(c => {
+            setDoc(doc(db, 'contractors', c.id), c).catch(e => {});
+          });
+        } else {
+          const loaded = snapshot.docs.map(doc => doc.data());
+          setContractors(loaded);
+        }
+      }, (error) => {
+        console.warn("Contractors subscription failed, loading local storage cache:", error);
+      });
     }
 
     return () => {
@@ -258,6 +328,7 @@ export const HOAProvider = ({ children }) => {
       unsubscribeAnnouncements();
       unsubscribeArcRequests();
       unsubscribeLogs();
+      unsubscribeContractors();
     };
   }, [currentUser]);
 
@@ -1014,6 +1085,74 @@ This is an automated notification email sent from SummitHOA Portal.
     await addLog(`[ARC] Request "${requestId}" updated to status "${status}" by administrator.`);
   };
 
+  const addContractor = async (companyName, email, phone, category, address = '', website = '', pocFirstName = '', pocLastName = '') => {
+    const id = `c-${Date.now()}`;
+    const newContractor = {
+      id,
+      companyName,
+      email,
+      phone,
+      category,
+      address,
+      website,
+      pocFirstName,
+      pocLastName,
+      recommendedBy: currentUser.name,
+      dateAdded: new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      await setDoc(doc(db, 'contractors', id), newContractor);
+      await addLog(`[CONTRACTOR] Resident ${currentUser.name} recommended contractor "${companyName}" (${category}).`);
+    } catch (err) {
+      console.warn("Failed to write contractor to Firestore:", err);
+      if (err.code === 'unavailable' || err.message.includes('network')) {
+        setContractors(prev => [newContractor, ...prev]);
+        await addLog(`[CONTRACTOR] Contractor "${companyName}" added locally (Offline).`);
+        return newContractor;
+      }
+      throw new Error(`Failed to recommend contractor: ${err.message}`);
+    }
+    return newContractor;
+  };
+
+  const editContractor = async (contractorId, updatedData) => {
+    try {
+      await updateDoc(doc(db, 'contractors', contractorId), updatedData);
+      await addLog(`[CONTRACTOR] Contractor "${contractorId}" profile was updated by Admin.`);
+    } catch (err) {
+      console.warn("Failed to update contractor in Firestore. Updated locally.", err);
+      setContractors(prev => prev.map(c => c.id === contractorId ? { ...c, ...updatedData } : c));
+    }
+  };
+
+  const deleteContractor = async (contractorId) => {
+    try {
+      await deleteDoc(doc(db, 'contractors', contractorId));
+      await addLog(`[CONTRACTOR] Contractor "${contractorId}" was deleted by Admin.`);
+    } catch (err) {
+      console.warn("Failed to delete contractor in Firestore. Deleted locally.", err);
+      setContractors(prev => prev.filter(c => c.id !== contractorId));
+    }
+  };
+
+  const rateContractor = async (contractorId, ratingValue) => {
+    const contractor = contractors.find(c => c.id === contractorId);
+    if (!contractor) return;
+    const updatedRatings = { ...(contractor.ratings || {}) };
+    updatedRatings[currentUser.id] = ratingValue;
+
+    try {
+      await updateDoc(doc(db, 'contractors', contractorId), {
+        ratings: updatedRatings
+      });
+      await addLog(`[CONTRACTOR] Resident ${currentUser.name} rated contractor "${contractor.companyName}" ${ratingValue} stars.`);
+    } catch (err) {
+      console.warn("Failed to save rating in Firestore. Saved locally.", err);
+      setContractors(prev => prev.map(c => c.id === contractorId ? { ...c, ratings: updatedRatings } : c));
+    }
+  };
+
   return (
     <HOAContext.Provider
       value={{
@@ -1046,7 +1185,12 @@ This is an automated notification email sent from SummitHOA Portal.
         clearLogs,
         arcRequests,
         addArcRequest,
-        updateArcRequestStatus
+        updateArcRequestStatus,
+        contractors,
+        addContractor,
+        editContractor,
+        deleteContractor,
+        rateContractor
       }}
     >
       {children}

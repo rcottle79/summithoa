@@ -10,7 +10,8 @@ import {
   HomeIcon,
   SettingsIcon,
   BylawsIcon,
-  ArcIcon
+  ArcIcon,
+  BriefcaseIcon
 } from './Icons';
 
 export default function Sidebar({ activeTab, setActiveTab }) {
@@ -22,6 +23,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
     { id: 'directory', label: 'Directory', icon: <DirectoryIcon /> },
+    { id: 'contractors', label: 'Contractors', icon: <BriefcaseIcon /> },
     { id: 'booking', label: 'Clubhouse Booking', icon: <BookingIcon /> },
     { id: 'notifications', label: 'Announcements', icon: <NotificationIcon /> },
     { id: 'arc', label: 'ARC Requests', icon: <ArcIcon /> },

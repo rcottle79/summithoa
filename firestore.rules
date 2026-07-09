@@ -87,6 +87,16 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Contractors rules
+    match /contractors/{contractorId} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/residents/$(request.auth.uid)) && 
+         resource.data.recommendedBy == get(/databases/$(database)/documents/residents/$(request.auth.uid)).data.name)
+      );
+    }
+
     // Mail queue rules (used by EmailJS or Extensions)
     match /mail/{mailId} {
       allow read, write: if request.auth != null;
