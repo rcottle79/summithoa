@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { HomeIcon, CheckIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { compressImage } from '../utils/imageCompressor';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 export default function Auth() {
   const { login, signup, resetPasswordEmail } = useContext(HOAContext);
@@ -62,8 +63,8 @@ export default function Auth() {
   const handleSignupInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phone') {
-      const numericValue = value.replace(/\D/g, '');
-      setSignupData(prev => ({ ...prev, [name]: numericValue }));
+      const formatted = formatPhoneNumber(value);
+      setSignupData(prev => ({ ...prev, [name]: formatted }));
     } else {
       setSignupData(prev => ({ ...prev, [name]: value }));
     }

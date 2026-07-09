@@ -3,6 +3,7 @@ import { HOAContext } from '../context/HOAContext';
 import { CheckIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 
 import { compressImage } from '../utils/imageCompressor';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 export default function Profile() {
   const { currentUser, updateProfile, changePassword } = useContext(HOAContext);
@@ -25,7 +26,11 @@ export default function Profile() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, [name]: formatPhoneNumber(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleAvatarSelect = (url) => {
@@ -108,7 +113,7 @@ export default function Profile() {
             </div>
             <div className="detail-item">
               <span className="detail-label">Phone Number</span>
-              <span className="detail-val">{currentUser.phone}</span>
+              <span className="detail-val">{formatPhoneNumber(currentUser.phone)}</span>
             </div>
             {currentUser.bio && (
               <div className="detail-item bio-item">

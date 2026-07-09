@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { SearchIcon, PhoneIcon, EmailIcon } from '../components/Icons';
 import Modal from '../components/Modal';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 export default function Directory() {
   const { residents } = useContext(HOAContext);
@@ -123,7 +124,7 @@ export default function Directory() {
               </div>
               <div className="modal-detail-row">
                 <span className="label">Phone</span>
-                <span className="value">{selectedResident.phone}</span>
+                <span className="value">{formatPhoneNumber(selectedResident.phone)}</span>
               </div>
               {selectedResident.bio && (
                 <div className="modal-detail-row bio-row">
@@ -137,7 +138,7 @@ export default function Directory() {
               <a href={`mailto:${selectedResident.email}`} className="btn btn-primary action-link">
                 <EmailIcon size={18} /> Email Resident
               </a>
-              <a href={`tel:${selectedResident.phone}`} className="btn btn-secondary action-link">
+              <a href={`tel:${selectedResident.phone.replace(/\D/g, '')}`} className="btn btn-secondary action-link">
                 <PhoneIcon size={18} /> Call Resident
               </a>
             </div>

@@ -3,6 +3,7 @@ import { HOAContext } from '../context/HOAContext';
 import { SupportIcon, DirectoryIcon, SearchIcon, CloseIcon, ArcIcon, NotificationIcon, BriefcaseIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 import { compressImage } from '../utils/imageCompressor';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 const defaultAvatars = [
   '/avatar-male.png',
@@ -459,7 +460,7 @@ export default function Admin() {
                         </td>
                         <td>{res.address}</td>
                         <td>{res.email}</td>
-                        <td>{res.phone}</td>
+                        <td>{formatPhoneNumber(res.phone)}</td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
                             <button 
@@ -527,7 +528,7 @@ export default function Admin() {
                     </td>
                     <td>{res.address}</td>
                     <td>{res.email}</td>
-                    <td>{res.phone}</td>
+                    <td>{formatPhoneNumber(res.phone)}</td>
                     <td>
                       <select
                         className="form-control table-select"
@@ -792,7 +793,7 @@ export default function Admin() {
                       </td>
                       <td>
                         <div style={{ fontSize: '0.85rem' }}>📧 {c.email}</div>
-                        <div style={{ fontSize: '0.85rem' }}>📞 {c.phone}</div>
+                        <div style={{ fontSize: '0.85rem' }}>📞 {formatPhoneNumber(c.phone)}</div>
                       </td>
                       <td>
                         {c.pocFirstName || c.pocLastName ? `${c.pocFirstName || ''} ${c.pocLastName || ''}` : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>None</span>}
@@ -1040,7 +1041,7 @@ export default function Admin() {
                 id="edit-res-phone" 
                 className="form-control" 
                 value={editFormData.phone} 
-                onChange={(e) => setEditFormData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
                 required
               />
             </div>
@@ -1232,7 +1233,7 @@ export default function Admin() {
                 <div><strong>Resident Name:</strong> {selectedArcRequest.residentName}</div>
                 <div><strong>Street Address:</strong> {selectedArcRequest.address}</div>
                 <div><strong>Email:</strong> {selectedArcRequest.email}</div>
-                <div><strong>Phone Number:</strong> {selectedArcRequest.phone}</div>
+                <div><strong>Phone Number:</strong> {formatPhoneNumber(selectedArcRequest.phone)}</div>
               </div>
             </div>
 
@@ -1378,7 +1379,7 @@ export default function Admin() {
                   type="tel"
                   id="edit-phone"
                   value={editContractorData.phone}
-                  onChange={(e) => setEditContractorData(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '') }))}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
                   className="form-control"
                   inputMode="numeric"
                   pattern="[0-9]*"

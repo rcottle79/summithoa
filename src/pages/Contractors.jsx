@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { HOAContext } from '../context/HOAContext';
 import { SearchIcon, PhoneIcon, EmailIcon, PlusIcon } from '../components/Icons';
 import Modal from '../components/Modal';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 export default function Contractors() {
   const { contractors, addContractor, rateContractor, currentUser } = useContext(HOAContext);
@@ -58,9 +59,8 @@ export default function Contractors() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phone') {
-      // Restrict to numeric characters only
-      const numericValue = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, [name]: numericValue }));
+      const formattedValue = formatPhoneNumber(value);
+      setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -404,7 +404,7 @@ export default function Contractors() {
                 </div>
                 <div className="modal-detail-row">
                   <span className="label">Phone</span>
-                  <span className="value">{selectedContractor.phone}</span>
+                  <span className="value">{formatPhoneNumber(selectedContractor.phone)}</span>
                 </div>
                 {selectedContractor.address && (
                   <div className="modal-detail-row">
@@ -469,7 +469,7 @@ export default function Contractors() {
                 <a href={`mailto:${selectedContractor.email}`} className="btn btn-primary action-link" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}>
                   <EmailIcon size={18} /> Email Contractor
                 </a>
-                <a href={`tel:${selectedContractor.phone}`} className="btn btn-secondary action-link" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                <a href={`tel:${selectedContractor.phone.replace(/\D/g, '')}`} className="btn btn-secondary action-link" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}>
                   <PhoneIcon size={18} /> Call Contractor
                 </a>
               </div>
