@@ -4,7 +4,7 @@ import { HomeIcon, CheckIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function Auth() {
-  const { login, signup, quickLogin, resetPasswordEmail } = useContext(HOAContext);
+  const { login, signup, resetPasswordEmail } = useContext(HOAContext);
   const [activeMode, setActiveMode] = useState('login'); // 'login', 'signup', or 'forgot_password'
   
   // Login fields
@@ -102,9 +102,7 @@ export default function Auth() {
     }
   };
 
-  const handleQuickLogin = (role) => {
-    quickLogin(role);
-  };
+
 
   return (
     <div className="auth-overlay animate-fade-in">
@@ -303,31 +301,6 @@ export default function Auth() {
               </button>
             </form>
 
-            {/* Quick Login Section */}
-            <div className="quick-login-section">
-              <span className="quick-login-title">Reviewer Quick Sign-In</span>
-              <p className="quick-login-desc">Test different app permission scopes instantly:</p>
-              <div className="quick-login-buttons">
-                <button 
-                  className="btn btn-secondary quick-btn role-admin" 
-                  onClick={() => handleQuickLogin('Admin')}
-                >
-                  👑 Admin Role
-                </button>
-                <button 
-                  className="btn btn-secondary quick-btn role-board" 
-                  onClick={() => handleQuickLogin('Board Member')}
-                >
-                  📢 Board Member
-                </button>
-                <button 
-                  className="btn btn-secondary quick-btn role-resident" 
-                  onClick={() => handleQuickLogin('Resident')}
-                >
-                  🏡 Resident Role
-                </button>
-              </div>
-            </div>
           </div>
         ) : (
           /* Register Screen */
