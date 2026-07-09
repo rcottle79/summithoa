@@ -18,6 +18,7 @@ export default function Tickets() {
     location: '',
     urgency: 'Medium'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = ['Plumbing', 'Electrical', 'Landscaping', 'Common Area', 'Structural', 'Painting', 'Other'];
 
@@ -28,6 +29,8 @@ export default function Tickets() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await addTicket(
         formData.title,
@@ -47,6 +50,8 @@ export default function Tickets() {
       setIsSubmitModalOpen(false);
     } catch (err) {
       alert(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -205,8 +210,10 @@ export default function Tickets() {
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary">File Ticket</button>
-            <button type="button" className="btn btn-secondary" onClick={() => setIsSubmitModalOpen(false)}>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Filing Ticket...' : 'File Ticket'}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsSubmitModalOpen(false)} disabled={isSubmitting}>
               Cancel
             </button>
           </div>

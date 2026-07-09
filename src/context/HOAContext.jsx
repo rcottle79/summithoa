@@ -668,8 +668,6 @@ export const HOAProvider = ({ children }) => {
 
     try {
       await setDoc(doc(db, 'tickets', id), newTicket);
-      // Update locally only if write succeeds
-      setTickets(prev => [newTicket, ...prev]);
       await addLog(`[SUPPORT] Support ticket "${title}" filed by ${currentUser.name}.`);
     } catch (err) {
       console.warn("Failed to write support ticket to Firestore:", err);
@@ -798,8 +796,6 @@ export const HOAProvider = ({ children }) => {
 
     try {
       await setDoc(doc(db, 'bookings', id), newBooking);
-      // Update locally only if write succeeds
-      setBookings(prev => [...prev, newBooking]);
       await addLog(`[CALENDAR] Clubhouse booked for ${date} during ${slot} by ${currentUser.name}.`);
     } catch (err) {
       console.warn("Failed to write booking to Firestore:", err);
@@ -865,8 +861,6 @@ This is an automated notification email sent from SummitHOA Portal.
     if (channels.website) {
       try {
         await setDoc(doc(db, 'announcements', id), newAnnouncement);
-        // Update locally only if write succeeds
-        setAnnouncements(prev => [newAnnouncement, ...prev]);
         await addLog(`[WEBSITE] Announcement "${title}" published to public feed.`);
       } catch (err) {
         console.warn("Failed to write announcement to Firestore:", err);
@@ -966,8 +960,6 @@ This is an automated notification email sent from SummitHOA Portal.
 
     try {
       await setDoc(doc(db, 'arcRequests', id), newRequest);
-      // Update locally only if write succeeds
-      setArcRequests(prev => [newRequest, ...prev]);
       await addLog(`[ARC] New Architectural Review Request filed by ${currentUser.name} for a ${projectType}.`);
     } catch (err) {
       console.warn("Failed to write ARC request to Firestore:", err);
