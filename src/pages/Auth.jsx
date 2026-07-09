@@ -61,7 +61,12 @@ export default function Auth() {
 
   const handleSignupInputChange = (e) => {
     const { name, value } = e.target;
-    setSignupData(prev => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      const numericValue = value.replace(/\D/g, '');
+      setSignupData(prev => ({ ...prev, [name]: numericValue }));
+    } else {
+      setSignupData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSignupSubmit = async (e) => {
@@ -360,9 +365,11 @@ export default function Auth() {
                     id="signup-phone"
                     name="phone"
                     className="form-control"
-                    placeholder="(555) 012-3456"
+                    placeholder="e.g. 5550123456"
                     value={signupData.phone}
                     onChange={handleSignupInputChange}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
                   />
                 </div>
