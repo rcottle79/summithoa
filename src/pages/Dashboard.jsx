@@ -34,9 +34,6 @@ export default function Dashboard({ setActiveTab }) {
           <button className="btn btn-secondary" onClick={() => setActiveTab('booking')}>
             <BookingIcon size={18} /> Book Clubhouse
           </button>
-          <button className="btn btn-primary" onClick={() => setActiveTab('tickets')}>
-            <SupportIcon size={18} /> File Repair Ticket
-          </button>
         </div>
       </div>
 
