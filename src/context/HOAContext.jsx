@@ -944,11 +944,12 @@ This is an automated notification email sent from SummitHOA Portal.
       }
     }
 
-    const totalResidents = residents.length;
+    const activeResidents = residents.filter(res => res.approved);
+    const totalResidents = activeResidents.length;
     
     if (channels.email) {
       await addLog(`[EMAIL] Dispatching email broadcasts to ${totalResidents} residents via EmailJS...`);
-      residents.forEach(async (res) => {
+      activeResidents.forEach(async (res) => {
         if (res.email) {
           try {
             await emailjs.send(
