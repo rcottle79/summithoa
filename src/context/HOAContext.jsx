@@ -949,7 +949,7 @@ This is an automated notification email sent from SummitHOA Portal.
     
     if (channels.email) {
       await addLog(`[EMAIL] Dispatching email broadcasts to ${totalResidents} residents via EmailJS...`);
-      activeResidents.forEach(async (res) => {
+      for (const res of activeResidents) {
         if (res.email) {
           try {
             await emailjs.send(
@@ -969,12 +969,14 @@ This is an automated notification email sent from SummitHOA Portal.
               }
             );
             await addLog(`[EMAIL] EmailJS dispatched notice to ${res.name} (${res.email})`);
+            // Brief 200ms spacing to prevent EmailJS Connection Limit rate blocks
+            await new Promise(resolve => setTimeout(resolve, 200));
           } catch (e) {
             console.error("EmailJS sending failed for " + res.email, e);
             await addLog(`[EMAIL] EmailJS failed for ${res.name}: ${e.text || e.message || e}`);
           }
         }
-      });
+      }
     }
 
     return newAnnouncement;
