@@ -952,7 +952,7 @@ This is an automated notification email sent from SummitHOA Portal.
       for (const res of activeResidents) {
         if (res.email) {
           try {
-            await emailjs.send(
+            const sendPromise = emailjs.send(
               EMAILJS_SERVICE_ID,
               EMAILJS_TEMPLATE_ID,
               {
@@ -968,9 +968,15 @@ This is an automated notification email sent from SummitHOA Portal.
                 publicKey: EMAILJS_PUBLIC_KEY
               }
             );
+
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Request Timeout after 6 seconds")), 6000)
+            );
+
+            await Promise.race([sendPromise, timeoutPromise]);
             await addLog(`[EMAIL] EmailJS dispatched notice to ${res.name} (${res.email})`);
-            // Brief 200ms spacing to prevent EmailJS Connection Limit rate blocks
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Spacing of 1000ms to stay well below EmailJS connection and API rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
           } catch (e) {
             console.error("EmailJS sending failed for " + res.email, e);
             await addLog(`[EMAIL] EmailJS failed for ${res.name}: ${e.text || e.message || e}`);
