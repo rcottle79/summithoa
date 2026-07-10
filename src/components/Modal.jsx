@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon } from './Icons';
 
 export default function Modal({ isOpen, onClose, title, children }) {
@@ -86,7 +87,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="modal-content glass-panel animate-fade-in"
@@ -160,6 +161,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           padding-right: 0.25rem;
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
