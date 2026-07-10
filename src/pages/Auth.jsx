@@ -73,6 +73,13 @@ export default function Auth() {
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setSignupError('');
+
+    const digitsOnly = signupData.phone.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      setSignupError("Phone number must contain at least 10 digits.");
+      return;
+    }
+
     try {
       await signup(
         signupData.name.trim(),
