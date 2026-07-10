@@ -63,8 +63,8 @@ export default function Auth() {
   const handleSignupInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phone') {
-      const formatted = formatPhoneNumber(value);
-      setSignupData(prev => ({ ...prev, [name]: formatted }));
+      const numericValue = value.replace(/\D/g, '');
+      setSignupData(prev => ({ ...prev, [name]: numericValue }));
     } else {
       setSignupData(prev => ({ ...prev, [name]: value }));
     }
