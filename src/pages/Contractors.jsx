@@ -58,12 +58,7 @@ export default function Contractors() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'phone') {
-      const formattedValue = formatPhoneNumber(value);
-      setFormData(prev => ({ ...prev, [name]: formattedValue }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFormSubmit = async (e) => {
@@ -73,6 +68,12 @@ export default function Contractors() {
 
     if (!formData.companyName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.category) {
       setFormError('Please fill out all required fields.');
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      setFormError('Phone number must contain at least 10 digits.');
       return;
     }
 
@@ -270,11 +271,9 @@ export default function Contractors() {
                 id="phone"
                 name="phone"
                 className="form-control"
-                placeholder="e.g. 5550123456"
+                placeholder="e.g. 555-012-3456"
                 value={formData.phone}
                 onChange={handleInputChange}
-                inputMode="numeric"
-                pattern="[0-9]*"
                 required
               />
             </div>

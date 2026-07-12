@@ -94,6 +94,11 @@ export default function Admin() {
       alert("Please fill out all required fields.");
       return;
     }
+    const phoneDigits = editContractorData.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      alert("Phone number must contain at least 10 digits.");
+      return;
+    }
     try {
       await editContractor(editingContractor.id, {
         companyName: editContractorData.companyName.trim(),
@@ -1379,10 +1384,8 @@ export default function Admin() {
                   type="tel"
                   id="edit-phone"
                   value={editContractorData.phone}
-                  onChange={(e) => setEditContractorData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                  onChange={(e) => setEditContractorData(prev => ({ ...prev, phone: e.target.value }))}
                   className="form-control"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
                   required
                 />
               </div>
