@@ -1367,7 +1367,7 @@ export default function Admin() {
                   className="form-control"
                   required
                 >
-                  {['Concrete', 'Electrician', 'General Contractor', 'Painter', 'Plumber', 'Roofer'].map(cat => (
+                  {['Concrete', 'Electrician', 'General Contractor', 'HVAC', 'Painter', 'Plumber', 'Roofer'].map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>

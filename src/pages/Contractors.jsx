@@ -54,7 +54,7 @@ export default function Contractors() {
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = ['Concrete', 'Electrician', 'General Contractor', 'Painter', 'Plumber', 'Roofer'];
+  const categories = ['Concrete', 'Electrician', 'General Contractor', 'HVAC', 'Painter', 'Plumber', 'Roofer'];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -185,7 +185,8 @@ export default function Contractors() {
                    c.category === 'Plumber' ? '🚰' : 
                    c.category === 'Roofer' ? '🏠' : 
                    c.category === 'General Contractor' ? '🔨' : 
-                   c.category === 'Painter' ? '🎨' : '🧱'}
+                   c.category === 'Painter' ? '🎨' : 
+                   c.category === 'HVAC' ? '❄️' : '🧱'}
                 </div>
                 <h3 className="card-name" style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: '600' }}>{c.companyName}</h3>
                 <div className="card-unit" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{c.category}</div>
@@ -375,7 +376,8 @@ export default function Contractors() {
                    selectedContractor.category === 'Plumber' ? '🚰' : 
                    selectedContractor.category === 'Roofer' ? '🏠' : 
                    selectedContractor.category === 'General Contractor' ? '🔨' : 
-                   selectedContractor.category === 'Painter' ? '🎨' : '🧱'}
+                   selectedContractor.category === 'Painter' ? '🎨' : 
+                   selectedContractor.category === 'HVAC' ? '❄️' : '🧱'}
                 </div>
                 <h3>{selectedContractor.companyName}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
